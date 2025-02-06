@@ -1,0 +1,10 @@
+.bash*
+.cache/
+.config/
+.oh-my-zsh/
+.shell*
+.ssh/
+.viminfo
+.z
+.zcompdump*
+.zsh_history
