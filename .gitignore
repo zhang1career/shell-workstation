@@ -1,6 +1,7 @@
 .bash*
 .cache/
 .config/
+.gitconfig
 .oh-my-zsh/
 .shell*
 .ssh/
