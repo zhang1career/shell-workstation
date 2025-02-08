@@ -1,4 +1,11 @@
-aws_update_machine_ip() {
+aws_update_machine_public_ip() {
+	aws ec2 describe-instances \
+		--filters Name=instance-state-name,Values=running \
+		--query 'Reservations[*].Instances[*].{name:Tags[?Key==`Name`]|[0].Value,sip:PublicIpAddress}' \
+		--output text | sed -E 's/\t/,/g' > ${DATA_HOME}/shell/machine_ip.csv
+}
+
+aws_update_machine_private_ip() {
 	aws ec2 describe-instances \
 		--filters Name=instance-state-name,Values=running \
 		--query 'Reservations[*].Instances[*].{name:Tags[?Key==`Name`]|[0].Value,sip:PrivateIpAddress}' \
