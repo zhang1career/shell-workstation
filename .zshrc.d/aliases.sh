@@ -13,7 +13,8 @@ alias drestart="docker restart"
 alias dnls="docker network ls"
 
 drun()  { docker run -itd $@; }
-deit()  { docker exec -it $@ $(which bash) --login; }
+deit()  { docker exec -it $@ /bin/sh --login; }
+deitt() { docker exec -it $@ $(which bash) --login; }
 dpause() { docker pause $@; }
 dupause() { docker unpause $@; }
 dlog()  { docker logs --tail=all -f $@; }
