@@ -5,10 +5,12 @@
 .oh-my-zsh/
 .shell*
 .ssh/
+.vim/
 .viminfo
 .z
 .zcompdump*
 .zsh_history
+.zsh_sessions/
 .CFUserTextEncoding
 .DS_Store
 .ShadowsocksX-NG/
