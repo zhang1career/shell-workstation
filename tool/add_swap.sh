@@ -7,9 +7,13 @@ else
 	SWAP_SIZE=$1
 fi
 
-
 # the swap file is n x 1 GB (128 MB x 8 x n):
 SWAP_COUNT=$((SWAP_SIZE * 8))
+
+# turn off all swap processes
+sudo swapoff -a
+
+# resize the swap
 sudo dd if=/dev/zero of=/swapfile bs=128M count=$SWAP_COUNT
 
 # updating file permission
