@@ -79,6 +79,8 @@ plugins=(
 
 source $ZSH/oh-my-zsh.sh
 
+source ~/.zsh_exports
+
 # User configuration
 if [ -d ~/.zshrc.d ]; then
 	if [ "$(ls -A ~/.zshrc.d)" ]; then

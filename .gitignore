@@ -54,4 +54,4 @@ auth-nextjs/
 components/
 constants/
 
-.zshrc.d/exports.sh
+.zsh_exports

@@ -89,7 +89,7 @@ alias dubbo_admin="java -jar $TOOLS_HOME/dubbo-admin/dubbo-admin/target/dubbo-ad
 alias jmeter="/bin/sh $TOOLS_HOME/apache-jmeter-5.4.1/bin/jmeter"
 
 # heidisql
-alias heidi="wine64 $TOOLS_HOME/HeidiSQL/heidisql.exe"
+alias heidi="LC_ALL=zh_CN.UTF-8 wine64 $TOOLS_HOME/HeidiSQL/heidisql.exe"
 
 
 ##########
