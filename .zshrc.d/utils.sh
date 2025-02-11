@@ -1,45 +1,44 @@
 map_get() {
 	# check param cardinality
-        NAME="map_get"
-        PARA_NUM=2
-        if [ $# -lt $PARA_NUM ]; then
-                echo "$(font_red_bold Error): The $(font_bold $NAME) function requires at least $PARA_NUM parameter(s)."
+        local name="map_get"
+        local param_num=2
+        if [ $# -lt $param_num ]; then
+                echo "$(font_red_bold Error): The $(font_bold $name) function requires at least $param_num parameter(s)."
                 return 1
         fi
 
 	# check file existance
-	DATA_PATH=$1
-	if [ ! -f $DATA_PATH ]; then
-		echo "$(font_red_bold Error): File $(font_bold $DATA_PATH) does not exist."
+	local data_path=$1
+	if [ ! -f $data_path ]; then
+		echo "$(font_red_bold Error): File $(font_bold $data_path) does not exist."
 		return 1
 	fi
 
-	KEY=$2
+	local key=$2
 
-	value=$(awk -F, -v key="$KEY" '$1 == key {print $2}' $DATA_PATH)
+	value=$(awk -F, -v key="$key" '$1 == key {print $2}' $data_path)
 	echo ${value}
 }
 
 
 map_keys() {
         # check param cardinality
-        NAME="map_keys"
-        PARA_NUM=1
-        if [ $# -lt $PARA_NUM ]; then
-                echo "$(font_red_bold Error): The $(font_bold $NAME) function requires at least $PARA_NUM parameter(s)."
+        local name="map_keys"
+        local param_num=1
+        if [ $# -lt $param_num ]; then
+                echo "$(font_red_bold Error): The $(font_bold $name) function requires at least $param_num parameter(s)."
                 return 1
         fi
 
         # check file existance
-        DATA_PATH=$1
-        if [ ! -f $DATA_PATH ]; then
-                echo "$(font_red_bold Error): File $(font_bold $DATA_PATH) does not exist."
+        local data_path=$1
+        if [ ! -f $data_path ]; then
+                echo "$(font_red_bold Error): File $(font_bold $data_path) does not exist."
                 return 1
         fi
 
-        awk -F ',' '{print $1}' $DATA_PATH
+        awk -F ',' '{print $1}' $data_path
 }
-
 
 sha256() {
 	echo -n $1 | openssl dgst -sha256
