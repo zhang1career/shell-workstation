@@ -2,7 +2,9 @@
 .cache/
 .config/
 .gitconfig
+.mysql_history
 .oh-my-zsh/
+.rediscli_history
 .shell*
 .ssh/
 .vim/
@@ -53,5 +55,6 @@ Tools/
 auth-nextjs/
 components/
 constants/
+dead.letter
 
 .zsh_exports
