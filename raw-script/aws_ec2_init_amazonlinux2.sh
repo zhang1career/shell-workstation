@@ -13,6 +13,17 @@ sudo yum -y install git
 # java
 sudo yum -y install java-17-amazon-corretto-devel
 
+# go
+wget https://go.dev/dl/go1.20.14.linux-amd64.tar.gz
+tar -xvf go1.20.14.linux-amd64.tar.gz
+mv go /usr/local
+echo "export GOROOT=/usr/local/go" >> /etc/profile.d/golang.sh
+echo "export PATH=$GOROOT/bin:$PATH" >> /etc/profile.d/golang.sh
+echo "export GOPATH=/data/go" >> /etc/profile.d/golang.sh
+echo "export GOCACHE=/var/cache/go" >> /etc/profile.d/golang.sh
+echo "export GOENV=/etc/go" >> /etc/profile.d/golang.sh
+
+
 # zsh
 sudo yum -y install zsh
 # chsh
@@ -54,4 +65,7 @@ sudo systemctl enable mysqld.service
 sudo amazon-linux-extras install redis6
 sudo systemctl start redis
 sudo systemctl enable redis
+
+# email
+sudo yum -y install sendmail-cf
 
