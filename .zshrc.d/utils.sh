@@ -7,17 +7,18 @@ map_get() {
                 return 1
         fi
 
-	# check file existance
+	# check file existence
 	local data_path=$1
-	if [ ! -f $data_path ]; then
-		echo "$(font_red_bold Error): File $(font_bold $data_path) does not exist."
+	if [ ! -f "$data_path" ]; then
+		echo "$(font_red_bold Error): File $(font_bold "$data_path") does not exist."
 		return 1
 	fi
 
 	local key=$2
 
-	value=$(awk -F, -v key="$key" '$1 == key {print $2}' $data_path)
-	echo ${value}
+	local result
+	result=$(awk -F, -v key="$key" '$1 == key {print $2}' "$data_path")
+	echo "$result"
 }
 
 
@@ -30,16 +31,16 @@ map_keys() {
                 return 1
         fi
 
-        # check file existance
+        # check file existence
         local data_path=$1
-        if [ ! -f $data_path ]; then
-                echo "$(font_red_bold Error): File $(font_bold $data_path) does not exist."
+        if [ ! -f "$data_path" ]; then
+                echo "$(font_red_bold Error): File $(font_bold "$data_path") does not exist."
                 return 1
         fi
 
-        awk -F ',' '{print $1}' $data_path
+        awk -F ',' '{print $1}' "$data_path"
 }
 
 sha256() {
-	echo -n $1 | openssl dgst -sha256
+	echo -n "$1" | openssl dgst -sha256
 }
