@@ -39,7 +39,7 @@ curl localhost:${CONTAINER_PORT}
 # /auth/signin?callbackUrl=http%3A%2F%2F92faa2765d34%3A3000%2F
 
 # zip image
-docker save ${DOCKER_REPO} | tqdm --bytes --total $(docker image inspect ${DOCKER_REPO} --format='{{.Size}}') > ${IMAGE}.tar
+docker save ${DOCKER_REPO} | tqdm --bytes --total "$(docker image inspect ${DOCKER_REPO} --format='{{.Size}}')" > ${IMAGE}.tar
 # copy image
 scp -i ${DEST_CRED} ${IMAGE}.tar ec2-user@${DEST_HOST}:/download/
 
@@ -49,7 +49,7 @@ docker stop ${IMAGE}
 
 # login destination
 # deploying machine
-sudo docker load -i /download/${IMAGE}.tar
+sudo docker load -i /download/"$IMAGE"_"$VERSION".tar
 
 # launch
 docker run --name ${IMAGE}_${VERSION} -p ${DEST_PORT}:${CONTAINER_PORT} -d ${DOCKER_REPO}:${VERSION}
