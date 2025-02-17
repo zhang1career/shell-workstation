@@ -1,7 +1,4 @@
 #!/bin/bash
-source ~/.bashrc
-
-echo "SuperDiff: diff local file and remote file"
 
 if [ $# -le 0 ]; then
 	read -rp "local filepath: " FILEPATH_LOCAL
@@ -33,39 +30,51 @@ else
 	echo "Usage: $0 [local-filepath remote-instance remote-filepath]"
 	exit 1
 fi
-echo ""
+echo
 
 # query remote instance user
 USER_REMOTE=$(map_get "$DATA_HOME"/shell/machine_user.csv "$INSTANCE_REMOTE")
 if [ -z "$USER_REMOTE" ]; then
-	echo "Error: The $INSTANCE_REMOTE user is not found."
+	echo "Error: The user $INSTANCE_REMOTE is not found."
 	exit 1
 fi
 # query remote instance password
 CRED_REMOTE=$(map_get "$DATA_HOME"/shell/machine_cred.csv "$INSTANCE_REMOTE")
 if [ -z "$CRED_REMOTE" ]; then
-	echo "Error: The $INSTANCE_REMOTE credential is not found."
+	echo "Error: The credent $INSTANCE_REMOTE is not found."
 	exit 1
 fi
 # query remote instance address
 ADDR_REMOTE=$(map_get "$DATA_HOME"/shell/machine_ip.csv "$INSTANCE_REMOTE")
 if [ -z "$ADDR_REMOTE" ]; then
-	echo "Error: The $INSTANCE_REMOTE address is not found."
+	echo "Error: The ip $INSTANCE_REMOTE is not found."
 	exit 1
 fi
 
 # file type: f for file, d for directory, n for not found
-FILE_TYPE_LOCAL="n"
 FILE_TYPE_REMOTE="n"
 # check file existence
-test -d "$FILEPATH_LOCAL" && FILE_TYPE_LOCAL='d' || FILE_TYPE_LOCAL='n'
-test -f "$FILEPATH_LOCAL" && FILE_TYPE_LOCAL='f' || FILE_TYPE_LOCAL='n'
+if [ -d "$FILEPATH_LOCAL" ]; then
+	FILE_TYPE_LOCAL="d"  # It's a directory
+elif [ -f "$FILEPATH_LOCAL" ]; then
+	FILE_TYPE_LOCAL="f"  # It's a regular file
+else
+	FILE_TYPE_LOCAL="n"  # It doesn't exist
+fi
 if [ "$FILE_TYPE_LOCAL" = "n" ]; then
-	echo "Error: The $FILEPATH_LOCAL is not found."
+	echo "Error: The $FILEPATH_LOCAL is not found on local."
 	exit 1
 fi
-ssh -i "$CRED_REMOTE" "$USER_REMOTE"@"$ADDR_REMOTE" "test -d '$FILEPATH_REMOTE' && FILE_TYPE_REMOTE='d' || FILE_TYPE_REMOTE='n'"
-ssh -i "$CRED_REMOTE" "$USER_REMOTE"@"$ADDR_REMOTE" "test -f '$FILEPATH_REMOTE' && FILE_TYPE_REMOTE='f' || FILE_TYPE_REMOTE='n'"
+
+FILE_TYPE_REMOTE=$(ssh -i "$CRED_REMOTE" "$USER_REMOTE"@"$ADDR_REMOTE" "
+	if [ -d \"$FILEPATH_REMOTE\" ]; then
+		echo 'd'
+	elif [ -f \"$FILEPATH_REMOTE\" ]; then
+		echo 'f'
+	else
+		echo 'n'
+	fi
+")
 if [ "$FILE_TYPE_REMOTE" = "n" ]; then
 	echo "Error: The $FILEPATH_REMOTE is not found on $INSTANCE_REMOTE."
 	exit 1
@@ -78,7 +87,7 @@ if [ "$FILE_TYPE_LOCAL" != "$FILE_TYPE_REMOTE" ]; then
 fi
 # compare directory
 if [ "$FILE_TYPE_LOCAL" = "d" ]; then
-	diff -y <(ls -1aR "$FILEPATH_LOCAL") <(ssh -i "$CRED_A" "$USER_A"@"$ADDR_A" "'ls -1aR $FILEPATH_REMOTE'")
+	diff -y <(ls -1aR "$FILEPATH_LOCAL") <(ssh -i "$CRED_REMOTE" "$USER_REMOTE"@"$ADDR_REMOTE" "'ls -1aR $FILEPATH_REMOTE'")
 else
-	diff -y <(cat "$FILEPATH_LOCAL") <(ssh -i "$CRED_A" "$USER_A"@"$ADDR_A" "'cat $FILEPATH_REMOTE'")
+	diff -y <(cat "$FILEPATH_LOCAL") <(ssh -i "$CRED_REMOTE" "$USER_REMOTE"@"$ADDR_REMOTE" "'cat $FILEPATH_REMOTE'")
 fi
