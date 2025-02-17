@@ -2,34 +2,37 @@ jump() {
 	# show hint when no parameter
 	if [ $# -le 0 ]; then
 		echo "$(font_yellow_bold Hint): Targets supported list as follow:"
-		map_keys ${DATA_HOME}/shell/machine_ip.csv
+		map_keys "$DATA_HOME"/shell/machine_ip.csv
 		return 0
 	fi
 
 	# check param cardinality
-	NAME="jump"
-	PARA_NUM=1
-	if [ $# -lt $PARA_NUM ]; then
-		echo "$(font_red_bold Error): The $(font_bold $NAME) function requires at least $PARA_NUM parameter(s)."
+	local name="jump"
+	local param_num=1
+	if [ $# -lt $param_num ]; then
+		echo "$(font_red_bold Error): The $(font_bold $name) function requires at least $param_num parameter(s)."
 		return 1
 	fi
 
-	TARGET=$1
+	local target=$1
 	# query target user
-	USER=$(map_get ${DATA_HOME}/shell/machine_user.csv $TARGET)
-        if [ -z $USER ]; then
-                echo "$(font_red_bold ERROR): The $(font_bold $TARGET) user is not found."
+	local user
+	user=$(map_get "$DATA_HOME"/shell/machine_user.csv "$target")
+        if [ -z "$user" ]; then
+                echo "$(font_red_bold ERROR): The $(font_bold "$target") user is not found."
         fi
 	# query target password
-	CRED=$(map_get ${DATA_HOME}/shell/machine_cred.csv $TARGET)
-        if [ -z $CRED ]; then
-                echo "$(font_red_bold ERROR): The $(font_bold $TARGET) credential is not found."
+	local cred
+	cred=$(map_get "$DATA_HOME"/shell/machine_cred.csv "$target")
+        if [ -z "$cred" ]; then
+                echo "$(font_red_bold ERROR): The $(font_bold "$target") credential is not found."
         fi
 	# query target address
-	ADDR=$(map_get ${DATA_HOME}/shell/machine_ip.csv $TARGET)
-	if [ -z $ADDR ]; then
-		echo "$(font_red_bold ERROR): The $(font_bold $TARGET) address is not found."
+	local addr
+	addr=$(map_get "$DATA_HOME"/shell/machine_ip.csv "$target")
+	if [ -z "$addr" ]; then
+		echo "$(font_red_bold ERROR): The $(font_bold "$target") address is not found."
 	fi
 
-	ssh -i $CRED ${USER}@${ADDR}
+	ssh -i "$cred" "$user"@"$addr"
 }
