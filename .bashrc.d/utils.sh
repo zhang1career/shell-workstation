@@ -1,44 +1,44 @@
 map_get() {
-	# check param cardinality
-        local name="map_get"
-        local param_num=2
-        if [ $# -lt $param_num ]; then
-                echo "$(font_red_bold Error): The $(font_bold $name) function requires at least $param_num parameter(s)."
-                return 1
-        fi
-
-	# check file existence
-	local data_path=$1
-	if [ ! -f "$data_path" ]; then
-		echo "$(font_red_bold Error): File $(font_bold "$data_path") does not exist."
+	# check arguments cardinality
+	local NAME="map_get"
+	local ARG_NUM=2
+	if [ $# -lt $ARG_NUM ]; then
+		echo "Error: The $NAME function requires at least $ARG_NUM parameter(s)."
 		return 1
 	fi
 
-	local key=$2
+	# check file existence
+	local DATA_PATH=$1
+	if [ ! -f "$DATA_PATH" ]; then
+		echo "Error: File $DATA_PATH does not exist."
+		return 1
+	fi
 
-	local result
-	result=$(awk -F, -v key="$key" '$1 == key {print $2}' "$data_path")
-	echo "$result"
+	local KEY=$2
+
+	local RESULT
+	RESULT=$(awk -F, -v KEY="$KEY" '$1 == KEY {print $2}' "$DATA_PATH")
+	echo "$RESULT"
 }
 
 
 map_keys() {
-        # check param cardinality
-        local name="map_keys"
-        local param_num=1
-        if [ $# -lt $param_num ]; then
-                echo "$(font_red_bold Error): The $(font_bold $name) function requires at least $param_num parameter(s)."
-                return 1
-        fi
+	# check arguments cardinality
+	local NAME="map_keys"
+	local ARG_NUM=1
+	if [ $# -lt $ARG_NUM ]; then
+		echo "Error: The $NAME function requires at least $ARG_NUM parameter(s)."
+		return 1
+	fi
 
-        # check file existence
-        local data_path=$1
-        if [ ! -f "$data_path" ]; then
-                echo "$(font_red_bold Error): File $(font_bold "$data_path") does not exist."
-                return 1
-        fi
+	# check file existence
+	local DATA_PATH=$1
+	if [ ! -f "$DATA_PATH" ]; then
+		echo "Error: File $DATA_PATH does not exist."
+		return 1
+	fi
 
-        awk -F ',' '{print $1}' "$data_path"
+	awk -F ',' '{print $1}' "$DATA_PATH"
 }
 
 sha256() {
