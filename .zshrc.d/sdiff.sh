@@ -1,4 +1,8 @@
 sdiff() {
+	local FILEPATH_LOCAL
+	local INSTANCE_REMOTE
+	local FILEPATH_REMOTE
+
 	if [ $# -le 0 ]; then
 		read "FILEPATH_LOCAL?local filepath: "
 		if [ -z "$FILEPATH_LOCAL" ]; then
@@ -32,18 +36,21 @@ sdiff() {
 	echo
 	
 	# query remote instance user
+	local USER_REMOTE
 	USER_REMOTE=$(map_get "$DATA_HOME"/shell/machine_user.csv "$INSTANCE_REMOTE")
 	if [ -z "$USER_REMOTE" ]; then
 		echo "Error: The user $INSTANCE_REMOTE is not found."
 		return 1
 	fi
 	# query remote instance password
+	local CRED_REMOTE
 	CRED_REMOTE=$(map_get "$DATA_HOME"/shell/machine_cred.csv "$INSTANCE_REMOTE")
 	if [ -z "$CRED_REMOTE" ]; then
-		echo "Error: The credent $INSTANCE_REMOTE is not found."
+		echo "Error: The credential $INSTANCE_REMOTE is not found."
 		return 1
 	fi
 	# query remote instance address
+	local ADDR_REMOTE
 	ADDR_REMOTE=$(map_get "$DATA_HOME"/shell/machine_ip.csv "$INSTANCE_REMOTE")
 	if [ -z "$ADDR_REMOTE" ]; then
 		echo "Error: The ip $INSTANCE_REMOTE is not found."
@@ -51,7 +58,7 @@ sdiff() {
 	fi
 	
 	# file type: f for file, d for directory, n for not found
-	FILE_TYPE_REMOTE="n"
+	local FILE_TYPE_LOCAL
 	# check file existence
 	if [ -d "$FILEPATH_LOCAL" ]; then
 		FILE_TYPE_LOCAL="d"	# It's a directory
@@ -64,7 +71,8 @@ sdiff() {
 		echo "Error: The $FILEPATH_LOCAL is not found on local."
 		return 1
 	fi
-	
+
+	local FILE_TYPE_REMOTE
 	FILE_TYPE_REMOTE=$(ssh -i "$CRED_REMOTE" "$USER_REMOTE"@"$ADDR_REMOTE" "
 		if [ -d \"$FILEPATH_REMOTE\" ]; then
 			echo 'd'
