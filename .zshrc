@@ -94,3 +94,4 @@ if [ -d ~/.zshrc.d ]; then
 	fi
 fi
 
+source ~/.zsh_aliases
