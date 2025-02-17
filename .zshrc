@@ -94,6 +94,8 @@ if [ -d ~/.zshrc.d ]; then
 	fi
 fi
 
+source ~/.zsh_aliases
+
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
 __conda_setup="$('/usr/local/anaconda3/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"

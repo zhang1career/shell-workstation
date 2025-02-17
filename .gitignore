@@ -1,4 +1,6 @@
-.bash*
+.bash_history
+.bash_logout
+.bashrc.bkp
 .cache/
 .config/
 .gitconfig

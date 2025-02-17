@@ -1,4 +1,5 @@
 #!/bin/bash
+source ~/.bashrc
 
 echo "SuperDiff: diff local file and remote file"
 
