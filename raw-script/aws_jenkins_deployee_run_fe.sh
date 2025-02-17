@@ -60,6 +60,6 @@ echo "Load image..."
 docker load -i /download/"$CONTAINER_NAME".tar
 
 echo "Run container..."
-docker run --name "$CONTAINER_NAME" -p "$SERVER_PORT":"$CONTAINER_PORT" -d "$DOCKER_REPO":"$VERSION"
+docker run --restart unless-stopped --name "$CONTAINER_NAME" -p "$SERVER_PORT":"$CONTAINER_PORT" -d "$DOCKER_REPO":"$VERSION"
 
 echo "Done."
