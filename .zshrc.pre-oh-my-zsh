@@ -1,0 +1,2 @@
+alias proxy_on='export http_proxy=http://127.0.0.1:8087 https_proxy=http://127.0.0.1:8087'
+alias proxy_off='unset http_proxy https_proxy'
