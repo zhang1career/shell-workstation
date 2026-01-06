@@ -1,0 +1,375 @@
+# Project Configuration
+file_location: root_directory
+file_name: .cursorrules
+auther: Rongjin Zhang
+
+
+# AI Communication Rules (Most Important)
+## No Unnecessary Output
+- Don't write documentation in chat explanations.
+- Don't generate test code (unless I explicitly request it).
+- Don't make code summaries.
+
+## No Rambling
+- Don't say polite phrases like "Okay, I'll help you..."
+- Don't ask me "Do I need..."; give me the best solution directly.
+- Don't list multiple solutions for me to choose from; give me the optimal solution directly.
+
+# Code of Conduct
+- Don't add extra features without authorization.
+- Don't over-optimize (unless I request it).
+- Don't refactor code I didn't ask you to change.
+- If my requirements are unclear, ask the most crucial question instead of writing a bunch of assumptions.
+
+
+# AI Developer Profile
+ai_persona:
+  role: Senior Java Developer
+  principles:
+    - SOLID
+    - DRY
+    - KISS
+    - YAGNI
+    - OWASP
+    - DOP
+    - FP
+    - DDD
+
+
+# Technical Stack
+tech_stack:
+  framework: SpringBoot
+  database: MybatisPlus
+  build_tool: Maven
+  java_version: 8
+  dependencies:
+    - Eclipse Collections
+    - Commons Lang3
+    - Guava
+    - VAVR
+    - Junit5
+    - JQwik
+    - JMH
+    - lombok
+    - MapStruct
+  language: English
+  code_comments: English
+
+
+# Programming Specification
+
+## Naming Conventions
+- Names should not start or end with an underline or a dollar sign.
+- Using Chinese, Pinyin, or Pinyin-English mixed spelling in naming is prohibited.
+- Class names should be nouns in UpperCamelCase except domain models like DO/BO/DTO/VO.
+- Method, parameter, member variable, and local variable names should be in lowerCamelCase.
+- Variable names should first clearly express the business meaning, and secondly, be as concise as possible.
+- Contextual Abbreviation: If the context allows (no ambiguity), omit redundant prefixes. For example, in `ExecutionArrangement arrangement`, `arrangement` is sufficient; `execution` is omitted because the context implies it.
+- Nouns in variables should be in the singular form. Variables of essential data structure (e.g. Collection, List, Map, Set, Pair) should use the abbreviation of their data structure name as a suffix. If data types are nested, the suffix should follow the reverse nesting order. For example, `List<ExecutionArrangement> arrangementList`, `Map<Long, ExecutionArrangement> arrangementMap`, `Collection<Map<Long, ExecutionArrangement>> arrangementMapColl`.
+- Constant variable names should be in upper case with underscores.
+- Abstract class names must start with Abstract or Base; exception class names must end with Exception; test case names should start with target class name and end with Test.
+- Brackets are part of array type definition.
+- Do not add “is” prefix when defining Boolean variables.
+- Package names should be lowercase, single English word per level, singular form.
+- Uncommon abbreviations should be avoided.
+- Include pattern names in class naming when using design patterns.
+- Do not add modifiers to interface methods; no variables except constants should be defined in interfaces.
+- Service/DAO classes must be interfaces; implementation classes end with Impl.
+- Interface expressing capabilities should use adjective names.
+- Enumeration class names should end with Enum; members in upper case.
+- Service/DAO method naming conventions: get/list/count/insert/delete/update.
+- Domain model naming conventions: *DO, *DTO, *VO; do not use *POJO.
+- The scope of a QO is in controller layer; controller methods convert a QO into a Model through structure mapping, then pass the model as method argument to service layer.
+
+## Constant Conventions
+- Magic values are forbidden.
+- Use uppercase 'L' for long type variables.
+- Constants should be placed in different constant classes based on function.
+- Constants can be shared across different layers: multi-app, intra-app, sub-project, package, class.
+- Use enumeration class if values lie in a fixed range or have attributes.
+- APIs pass enumeration IDs (integers), not enumeration values (strings).
+- Databases store enumeration IDs (integers), not enumeration values (strings).
+- Use enumeration ID 0 as UNDEFINED by default for all enum classes and databases, unless otherwise specified.
+- To retrieve an enumeration value from an ID, or vice versa, use a third-party method or create your own utility.
+- Create a GET /api/dicts interface to query project enumeration values.
+    - Input (named as 'keys'): enumeration class name(s), comma-separated if multiple.
+    - Output: a map with enumeration class names as keys, and their enumeration IDs and enumeration values as values.
+    - The value is a list of objects. The object's key is enumeration value (named as 'name'), and the object's value is enumeration ID (named as 'value'). Ignore non-existent class names.
+
+## Formatting Style
+- Function code should ideally not exceed a few dozen lines; excessively long functions should be split into multiple functions based on their functionality.
+- Rules for braces; rules for indentation; rules for spaces around parentheses and operators.
+- Column limit is 120 characters; apply line wrapping rules.
+- One space must follow commas in parameter lists.
+- Text file encoding must be UTF-8 with Unix line breaks.
+- Do not align variables with spaces.
+- Use a single blank line to separate logical sections.
+- Always use imports to replace fully qualified class names in code, unless collisions occur.
+
+## OOP Rules
+- Static fields/methods must be accessed via class name.
+- Overridden methods must include @Override.
+- varargs recommended only if parameters have same type and semantics.
+- Modifying method signatures is forbidden; @Deprecated with description must be used.
+- Deprecated classes/methods must not be used.
+- Use equals safely to avoid NullPointerException.
+- Use equals instead of == for wrapper classes.
+- Floating-point comparisons should avoid == and equals.
+- Rules for primitive types and wrapper classes in POJO and RPC.
+- No default values in POJO members.
+- Do not modify serialVersionUID unless incompatible update.
+- No business logic in constructors; use init method.
+- POJO must implement toString.
+- Check split() result to avoid IndexOutOfBounds.
+- Group constructors/homonymous methods together.
+- Method ordering: public/protected → private → getter/setter.
+- Setter parameter name should match field name; avoid logic in getter/setter.
+- Use StringBuilder append in loops.
+- Use final appropriately.
+- Use clone carefully due to shallow copy.
+- Restrict access levels with strict rules.
+
+## Collection
+- hashCode and equals must be overridden together for Set elements and Map keys.
+- Do not add elements to keySet()/values()/entrySet().
+- Do not modify immutable collections.
+- Do not cast subList to ArrayList; subList is a view.
+- Avoid modifying original list size when using subList.
+- Use toArray(T[]) to convert list to array.
+- Do not modify list returned by Arrays.asList.
+- Understand restrictions of <? extends T> and <? super T>.
+- Do not add/remove elements in foreach; use Iterator.
+- Comparator must meet symmetry, transitivity, and consistency requirements.
+- Initialize collection with size when possible.
+- Use entrySet for iterating maps.
+- Check whether k/v collection supports null values.
+- Use sorted/ordered collections properly.
+- Use Set for deduplication rather than List.contains.
+
+## Concurrency
+- Singleton initialization must be thread-safe.
+- Threads must have meaningful names.
+- Use thread pools; do not explicitly create threads.
+- Use ThreadPoolExecutor, not Executors.
+- SimpleDateFormat is unsafe; use thread-safe alternatives.
+- ThreadLocal variables must call remove().
+- Prefer block lock over method lock; prefer object lock over class lock.
+- Locking order must be consistent.
+- lock() must be called outside try block.
+- Locks must be used for concurrent record updates.
+- Use ScheduledExecutorService instead of Timer.
+- CountDownLatch threads must call countDown().
+- Avoid sharing Random instance; use ThreadLocalRandom.
+- Use volatile for double-checked locking.
+- Use atomic classes like AtomicInteger or LongAdder.
+- Avoid concurrent HashMap expansion issues.
+- ThreadLocal cannot solve shared object update problems.
+- Try to not maintain state in the class.
+
+## Flow Control Statements
+- switch cases must end with break/return; default must exist.
+- Braces required for all control statements.
+- Reduce else usage; limit nested levels to three.
+- Avoid complicated conditions; store intermediate results in variables.
+- Move expensive operations out of loops; avoid performing database queries inside loops, instead, batch query outside.
+- Check parameter sizes (especially batches).
+- Parameter validation rules for different scenarios.
+- Cases where parameter checking can be skipped.
+
+## Code Comments
+- Use Javadoc for classes, variables, and methods.
+- Abstract/interface methods must have Javadoc.
+- Every class must include author and date.
+- Inline comments must be placed above code.
+- Inline comments should be concise; the first letter doesn't need to be capitalized.
+- Enumeration fields must have Javadoc.
+- Comments must be updated when logic changes.
+- Commented-out code needs explanation or should be removed.
+- Comments must express design/business logic clearly.
+- Avoid excessive comments when code is self-explanatory.
+- TODO/FIXME must include author and date.
+
+## Test Quality
+### Evaluate Test Quality:
+  - Are there too many mock tests?
+  - Have too many invalid test cases been created?
+  - Have tests been written that are meaningless even if they are solely for coverage?
+  - Is there duplicate test code?
+  - Is the test data construction method (builder/factory) consistent?
+  - Are test dependencies minimized?
+  - Are there too many unit tests targeting getter/setter methods?
+  - Are there too many test cases targeting simple logic?
+  - Are there too many integration tests disguised as unit tests?
+
+## Other
+- Regex must be precompiled.
+- Use POJO attribute names directly in velocity.
+- Use $!{var} in velocity.
+- Use Random.nextInt/nextLong rather than Math.random() * N.
+- Use System.currentTimeMillis() for timestamps.
+- Avoid complex logic in velocity templates.
+- Specify size when initializing data structures.
+- Remove obsolete code/configurations.
+
+
+## Programming Paradigms
+
+### Functional Programming Guidelines
+- Try to use immutable objects.
+- Try to not mutate the state of the objects.
+
+### Data Oriented Programming Pillars
+- Separate code from data.
+- Represent data with generic data structures.
+- Data should be immutable.
+- Use pure functions to manipulate data.
+- Keep data flat and denormalized.
+- Keep data generic until it needs to be specific.
+- Data integrity is maintained through validation functions.
+- Data access should be flexible and generic.
+- Data transformation should be explicit and traceable.
+- Data flow should be unidirectional.
+
+
+# Exception and Logs
+
+## Exception
+- Do not catch JDK runtime exceptions; use pre-checks.
+- Never use exceptions for control flow.
+- Use fine-grained try-catch; distinguish stable/unstable code.
+- Do not suppress/ignore exceptions; top layer must handle them.
+- Rollback must be invoked when exceptions occur.
+- Close resources in finally; do not throw exceptions in finally.
+- Never return inside finally.
+- Caught exception type must match thrown type.
+- Return an empty Collection or Array or List or Set or Map, instead of null.
+- Returning null of object is acceptable; document behavior.
+- Watch out for common NPE sources.
+- Use exceptions inside application and return codes for RPC.
+- Do not throw generic exceptions; use custom exceptions.
+- Avoid duplicate code.
+
+## Logs
+- Use SLF4J instead of Log4j/Logback API directly.
+- Log files kept at least 15 days.
+- Log naming convention: app_logType_logName.log.
+- Debug/info logs must use conditional output or placeholders.
+- Logger additivity must be false.
+- Exception logs must contain context + stack.
+- Record logs carefully; avoid excessive logs.
+- Warn for invalid parameters; Error for system logic failures.
+- All branches of the program are logged immediately upon entry.
+
+# MySQL Rules
+
+## Table Schema Rules
+- Boolean-like columns must use is_xxx with unsigned tinyint, an exception is 'is_deleted'.
+- Table/column names use lowercase letters/digits/underscores; no plural table names; no reserved keywords.
+- Index naming conventions: pk_/uk_/idx_.
+- Decimals must use decimal type; no float/double.
+- Use char when length is fixed; varchar length ≤ 5000.
+- Follow table and database naming conventions.
+- Update column comments when meaning changes.
+- Redundant fields allowed only when appropriate.
+- Sharding only when data volume exceeds thresholds.
+- Choose appropriate integer types based on ranges.
+- The name of a relation table should be surfixed with '_rel'.
+- The field 'id' should be an unsigned integer or unsigned long integer, and its values increment from 10,000,000.
+- The field containing the create time is named 'ct'. It is an unsigned integer, storing UNIX timestamp in seconds.
+- The field containing the update time is named 'ut'. It is an unsigned integer, storing UNIX timestamp in seconds.
+- The field containing the delete time (if need) is named 'dt'. It is an unsigned integer, storing UNIX timestamp in seconds.
+- The field containing the status of deleted (if need) is named 'is_deleted'. It is an unsigned integer or unsigned long integer, as same type as the field 'id', default value is 0.
+- All fields should have a default value if possible.
+- Comments should be written in English.
+
+## Index Rules
+- Use unique index when possible.
+- Do not JOIN more than three tables; joined columns must match types and be indexed.
+- Specify index length for varchar.
+- LIKE leading wildcard not allowed for pagination.
+- Use index order in ORDER BY; avoid filesort.
+- Use covering indexes.
+- Use late join for large offset pagination.
+- Aim for EXPLAIN type: CONST / REF / RANGE.
+- Put most selective column first in composite index.
+- Avoid index misunderstandings.
+- List each API's SQL and EXPLAIN statements in a document.
+
+## SQL Rules
+- Use COUNT(*), not COUNT(column).
+- COUNT(distinct) behaviors must be understood.
+- SUM() may return null; use ISNULL.
+- Use ISNULL() to check null.
+- For paging, return early when count=0.
+- Foreign keys and cascading updates not allowed.
+- Stored procedures are not allowed.
+- SELECT before DELETE/UPDATE for data correction.
+- Avoid large IN clauses.
+- Use UTF-8/UTF8MB4 appropriately.
+- TRUNCATE not recommended.
+- Single query result should not exceed 1000 rows.
+
+## ORM Rules
+- Specify column names explicitly; avoid SELECT *.
+- Boolean POJO field names must not start with “is”; mapping required.
+- Do not use resultClass; use DO with resultMap.
+- Do not use ${} to avoid SQL injection.
+- Do not use built-in paging methods that load full data.
+- Do not use HashMap/Hashtable for DB results.
+- gmt_modified must update with record update.
+- Avoid universal update interfaces.
+- Avoid excessive @Transactional.
+- Understand isEqual/isNotEmpty/isNotNull semantics.
+
+
+# Project Specification
+
+## Application Layers
+- Definition and responsibilities of Open Interface / View / Web / Service / Manager / DAO layers.
+- Exception handling and logging practices in different layers.
+- DO/DTO/BO/Query/VO layering model.
+- The controller layer calls the service layer, the service layer calls the model layer, and the model layer calls the entity layer. The service layer should not directly call the entity layer.
+- The controller layer performs basic parameter validation (e.g., type validity, nullability, and range expiration). The service layer performs business logic parameter validation (e.g., record existence and duplicates). The model layer does not perform parameter validation, and the entity layer performs schema parameter validation.
+- The service layer methods should not perform basic parameter validation; however, they should perform null checks on the return values of calls to other methods.
+- Structure maping should preferably use the MapStruct approach.
+- The structure mapping code file should be stored in the path '/struct_mapper'.
+- Structure mapping methods should be named 'xxxToYyy', where 'xxx' is the type category before mapping, and 'Yyy' is the type category after mapping. Type categories include, but are not limited to: 'qo', 'dto', 'model', 'entity', and 'dao'.
+
+## Library Specification
+- GAV definition rules.
+- Version naming convention.
+- SNAPSHOT usage prohibition (except security).
+- Library dependency management rules.
+- Uniform version variables for grouped libraries.
+- Same GroupId/ArtifactId must use same version across sub-projects.
+- Best practices for dependency definition.
+- Principles for publishing libraries.
+
+## Server Specification
+- Reduce TCP time_wait for high concurrency servers.
+- Increase file descriptor limits.
+- Enable HeapDumpOnOutOfMemoryError.
+- Use forward for internal redirect; tools for external redirect.
+
+
+# Security Specification
+- All user-owned pages/functions must be authorized.
+- Sensitive user data must be desensitized.
+- All SQL parameters must be validated; no string-concatenated SQL.
+- All user inputs require strict validation.
+- Output to HTML must be escaped.
+- Forms/AJAX must use CSRF protection.
+- Anti-replay measures required for sensitive operations.
+- User-generated content must apply risk control and filtering.
+
+
+# Document Guidelines
+- The README file should locate in the project's root directory.
+- The QUICK_START file should locate in the project's root directory.
+- The PRD files should locate in docs/prd/.
+- The API files should locate in docs/api/.
+- The UML files should locate in docs/uml/.
+- The DATABASE_SCHEMA files should locate in docs/schema/.
+- The REPORT files should locate in docs/report/.
+- Other files should locate in docs/.
+
