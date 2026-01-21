@@ -1,5 +1,4 @@
-# iOS / React Native
-## Flipper 检测与彻底清理流程（Knowledge Point）
+# Flipper 检测与彻底清理流程
 
 ### 背景
 
