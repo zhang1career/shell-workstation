@@ -1,6 +1,6 @@
 # ss
-alias proxy_on='export http_proxy=http://127.0.0.1:1087 https_proxy=http://127.0.0.1:1087'
-alias proxy_off='unset http_proxy https_proxy'
+alias proxy_on='export http_proxy=http://127.0.0.1:1087 https_proxy=http://127.0.0.1:1087 all_proxy=http://127.0.0.1:1087'
+alias proxy_off='unset http_proxy https_proxy all_proxy'
 
 
 # docker

@@ -15,7 +15,7 @@
 
 ## 系统管理脚本
 
-### 1. `add_swap.sh` - 添加/调整Swap交换空间
+### 100. `add_swap.sh` - 添加/调整Swap交换空间
 
 **功能**：为Linux系统添加或调整swap交换空间
 
@@ -40,7 +40,7 @@ sudo ./add_swap.sh 4        # 创建4GB swap
 
 ---
 
-### 2. `add_user_to_dev_group.sh` - 添加用户到dev组
+### 101. `add_user_to_dev_group.sh` - 添加用户到dev组
 
 **功能**：将指定用户添加到dev用户组
 
@@ -64,7 +64,7 @@ sudo ./add_user_to_dev_group.sh john
 
 ---
 
-### 3. `startup.sh` - 系统启动初始化脚本
+### 102. `startup.sh` - 系统启动初始化脚本
 
 **功能**：创建并配置shell运行目录（用于AWS EC2环境）
 
@@ -81,9 +81,84 @@ sudo ./startup.sh
 
 ---
 
+### 103. `space-manager.sh` - 大容量文件管理
+
+**功能**：管理大容量目录（如 Xcode DerivedData），支持迁移到外部磁盘或安全清理
+
+**用法**：
+```bash
+# 迁移目录到外部磁盘
+./space-manager.sh migrate <SOURCE> <TARGET>
+
+# 清理目录
+./space-manager.sh clean <SOURCE>
+```
+
+**参数**：
+- `migrate` - 迁移模式，将源目录迁移到目标位置并创建符号链接
+- `clean` - 清理模式，安全清理指定目录
+- `<SOURCE>` - 源目录路径（支持 `~` 等路径展开）
+- `<TARGET>` - 目标目录路径（仅迁移模式需要）
+
+**说明**：
+- **迁移功能**：
+  - 使用 `rsync` 安全地将目录内容复制到目标位置（保留进度显示）
+  - 删除原始目录后创建符号链接，实现透明访问
+  - 适用于将大容量目录迁移到外部磁盘或不同分区
+  - 迁移后原路径仍可使用，实际数据存储在目标位置
+
+- **清理功能**：
+  - 智能检测符号链接：如果是符号链接，会备份目标目录后再清理
+  - 安全备份：清理前会自动创建带时间戳的备份目录
+  - 原子操作：确保清理过程的安全性
+  - 支持普通目录的直接清理
+
+**特性**：
+- 使用 `rsync` 而不是 `mv`，确保数据安全
+- 避免嵌套符号链接问题
+- 支持原子清理操作
+- 自动路径展开（支持 `~` 等）
+- 详细的执行步骤提示
+
+**依赖**：
+- bash
+- rsync（用于迁移功能）
+- 标准 Unix 工具（rm, ln, mkdir, date 等）
+
+**使用场景**：
+- Xcode DerivedData 迁移到外部磁盘
+- 大型构建缓存目录管理
+- 临时文件目录清理
+- 释放系统磁盘空间
+
+**示例**：
+```bash
+# 迁移 Xcode DerivedData 到外部磁盘
+./space-manager.sh migrate \
+  ~/Library/Developer/Xcode/DerivedData \
+  /Volumes/ExternalDisk/Xcode/DerivedData
+
+# 清理 Xcode DerivedData（如果是符号链接，会备份）
+./space-manager.sh clean \
+  ~/Library/Developer/Xcode/DerivedData
+
+# 迁移其他大容量目录
+./space-manager.sh migrate \
+  ~/Downloads/large-files \
+  /Volumes/Backup/large-files
+```
+
+**注意事项**：
+- 迁移操作会删除原始目录，请确保目标位置有足够空间
+- 清理操作对于符号链接会创建备份，普通目录会直接删除
+- 建议在执行前确认路径正确，避免误操作
+- 确保目标位置存在或可访问
+
+---
+
 ## 开发工具脚本
 
-### 4. `aws_jenkins_deployee_run_fe.sh` - 部署前端Docker容器
+### 200. `aws_jenkins_deployee_run_fe.sh` - 部署前端Docker容器
 
 **功能**：部署前端Docker容器（用于AWS Jenkins环境）
 
@@ -112,7 +187,7 @@ sudo ./startup.sh
 
 ---
 
-### 5. `git_nearest_direct_child_commit.sh` - 查找最近的直接子提交
+### 201. `git_nearest_direct_child_commit.sh` - 查找最近的直接子提交
 
 **功能**：在Git历史中查找指定参考提交之后最近的直接子提交
 
@@ -136,7 +211,7 @@ sudo ./startup.sh
 
 ---
 
-### 6. `git_user_stats.sh` - Git用户统计
+### 202. `git_user_stats.sh` - Git用户统计
 
 **功能**：显示Git仓库中用户的统计信息
 
@@ -163,9 +238,195 @@ sudo ./startup.sh
 
 ---
 
+### 203. `laravel_diagnose.php` - Laravel环境诊断
+
+**功能**：检查Laravel项目的环境变量和数据库配置
+
+**用法**：
+```bash
+php laravel_diagnose.php
+```
+
+**说明**：
+- 需要在Laravel项目根目录下运行（需要访问vendor/autoload.php和bootstrap/app.php）
+- 检查环境变量：APP_ENV, DB_CONNECTION, DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+- 检查数据库配置（从config/database.php读取）
+- 检查.env文件的存在性、大小、权限和可读性
+- 检查系统环境变量
+- 密码信息会被隐藏显示为`***`
+
+**检查内容**：
+1. **环境变量检查**：显示所有数据库相关的环境变量
+2. **数据库配置检查**：显示从Laravel配置中读取的数据库连接信息
+3. **.env文件检查**：检查.env文件是否存在、大小、权限和可读性，并显示部分DB_配置行（不包含敏感信息）
+4. **系统环境变量检查**：检查系统级别的环境变量
+
+**依赖**：
+- PHP 7.4+
+- Laravel框架（需要vendor/autoload.php和bootstrap/app.php）
+
+**示例**：
+```bash
+# 在Laravel项目根目录下运行
+cd /path/to/laravel-project
+php laravel_diagnose.php
+
+# 或者从其他位置运行（需要指定Laravel项目路径）
+php /path/to/script-tool/laravel_diagnose.php
+```
+
+**输出示例**：
+```
+=== 环境变量检查 ===
+APP_ENV: local
+DB_CONNECTION: mysql
+...
+
+=== 数据库配置检查 ===
+...
+
+=== .env文件检查 ===
+.env文件存在
+...
+找到的DB_配置行:
+...
+
+=== 系统环境变量检查 ===
+...
+```
+
+---
+
+### 204. `pip_pkg_size.sh` - Pip包大小统计
+
+**功能**：统计当前 Python 环境中已安装 pip 包的磁盘占用大小，按从大到小排序输出
+
+**用法**：
+```bash
+./pip_pkg_size.sh
+```
+
+**说明**：
+- 统计当前 Python 环境中所有已安装的 pip 包的磁盘占用
+- 按包大小从大到小排序输出
+- 自动转换单位显示（KB、MB、GB）
+- 执行过程中显示进度条，方便查看处理进度
+- 使用临时文件存储中间结果，处理完成后自动清理
+
+**工作原理**：
+1. 通过 `pip list` 获取已安装包列表
+2. 通过 `pip show <pkg>` 获取包的安装路径（Location）
+3. 假定包目录位于 `site-packages/<package_name>`（通常是小写）
+4. 使用 `du` 统计目录大小（单位 KB）
+5. 所有结果汇总后按大小排序并格式化输出
+
+**依赖**：
+- pip（Python 包管理器）
+- du（用于统计目录大小）
+- awk / sort / tr / wc（系统自带工具）
+
+**输出格式**：
+- 自动根据大小选择合适的单位（KB、MB、GB）
+- 格式：`大小 包名`，例如：
+  ```
+  125.3 MB  numpy
+   45.2 MB  pandas
+   12.5 MB  scipy
+    3.2 MB  requests
+  ```
+
+**示例**：
+```bash
+# 直接运行脚本
+./pip_pkg_size.sh
+
+# 输出示例：
+# Scanning pip packages (150 total)...
+# [########################################] 100% (150/150) numpy
+# Sorting results...
+# 125.3 MB  numpy
+#  45.2 MB  pandas
+#  12.5 MB  scipy
+#   3.2 MB  requests
+# ...
+```
+
+**注意事项**：
+- 脚本使用 `set -e`，任何命令出错会立即退出
+- 只统计实际存在的包目录，避免不存在的目录导致错误
+- 进度条会实时更新，显示当前处理的包名
+
+---
+
+### 205. `png_info.py` - PNG图片信息分析
+
+**功能**：分析PNG图片的尺寸信息（宽度和高度），并打印详细信息
+
+**用法**：
+```bash
+python png_info.py <image.png>
+```
+
+**参数**：
+- `image.png` - 必需，PNG图片文件路径
+
+**说明**：
+- 分析PNG图片的像素尺寸（宽度 x 高度）
+- 显示图片格式、文件大小、宽高比等信息
+- 支持相对路径和绝对路径
+- 提供友好的错误提示和帮助信息
+
+**输出信息**：
+- 文件路径
+- 图片格式
+- 图片尺寸（宽度 x 高度，单位：像素）
+- 文件大小（字节和MB）
+- 宽高比
+
+**依赖**：
+- Python 3.6+
+- Pillow (PIL) 库
+
+**安装依赖**：
+```bash
+pip install Pillow
+```
+
+**示例**：
+```bash
+# 分析当前目录下的PNG图片
+python png_info.py example.png
+
+# 分析指定路径的PNG图片
+python png_info.py /path/to/image.png
+
+# 查看帮助信息
+python png_info.py --help
+```
+
+**输出示例**：
+```
+============================================================
+PNG 图片信息
+============================================================
+文件路径: example.png
+图片格式: PNG
+图片尺寸: 1920 x 1080 像素
+文件大小: 1,245,678 字节 (1.19 MB)
+宽高比: 1.78
+============================================================
+```
+
+**注意事项**：
+- 虽然主要针对PNG格式，但脚本会尝试解析其他格式的图片
+- 对于非PNG格式的图片，会显示警告信息
+- 如果文件不存在或无法读取，会显示相应的错误信息
+
+---
+
 ## 数据处理脚本
 
-### 7. `filter_row_with_blank_field.sh` - 过滤空白字段行
+### 300. `filter_row_with_blank_field.sh` - 过滤空白字段行
 
 **功能**：过滤掉包含空白字段的数据行（制表符分隔）
 
@@ -189,7 +450,7 @@ sudo ./startup.sh
 
 ---
 
-### 8. `map_host_port_and_index_by_uri.sh` - 服务映射转换
+### 301. `map_host_port_and_index_by_uri.sh` - 服务映射转换
 
 **功能**：将IP:服务列表格式的数据转换为应用:IP:端口列表格式
 
@@ -222,7 +483,7 @@ IP地址<TAB>应用1:端口1,应用2:端口2,...
 
 ---
 
-### 9. `parse_uri_ip_and_write_cache.sh` - 写入Redis缓存
+### 302. `parse_uri_ip_and_write_cache.sh` - 写入Redis缓存
 
 **功能**：从文件中读取键值对并写入Redis缓存
 
@@ -251,7 +512,7 @@ IP地址<TAB>应用1:端口1,应用2:端口2,...
 
 ---
 
-### 10. `refresh_api_gateway_token.sh` - 刷新API网关Token
+### 303. `refresh_api_gateway_token.sh` - 刷新API网关Token
 
 **功能**：刷新API网关的访问令牌
 
@@ -285,7 +546,7 @@ IP地址<TAB>应用1:端口1,应用2:端口2,...
 
 ## 音视频处理脚本
 
-### 11. `play_audio.py` - 播放音频文件
+### 400. `play_audio.py` - 播放音频文件
 
 **功能**：播放音频文件，支持指定播放区间和播放速度
 
@@ -314,7 +575,7 @@ python play_audio.py music.mp3 --start 30 --end 90 --speed 0.8
 
 ---
 
-### 12. `txt2voice.py` - 文本转语音
+### 401. `txt2voice.py` - 文本转语音
 
 **功能**：将文本文件转换为语音（使用Microsoft Edge TTS）
 
@@ -348,7 +609,7 @@ python txt2voice.py text.txt output.mp3 zh-CN-XiaoxiaoNeural
 
 ---
 
-### 13. `voice2txt.py` - 语音转文本
+### 402. `voice2txt.py` - 语音转文本
 
 **功能**：将音频文件转换为文本（使用OpenAI Whisper）
 
@@ -386,7 +647,7 @@ python voice2txt.py audio.mp3 --output transcript.txt
 
 ## 网络服务脚本
 
-### 14. `debug_server.py` - HTTP调试服务器
+### 500. `debug_server.py` - HTTP调试服务器
 
 **功能**：HTTP调试服务器，用于查看和分析HTTP请求详情
 
@@ -415,7 +676,7 @@ python debug_server.py --host 127.0.0.1 --port 9000 --path /api
 
 ---
 
-### 15. `send_kafka_template.py` - Kafka消息发送
+### 501. `send_kafka_template.py` - Kafka消息发送
 
 **功能**：基于JSON模板生成并发送Kafka消息
 
@@ -457,6 +718,88 @@ python send_kafka_template.py --topic test-topic --template_file template.json -
 
 ---
 
+### 502. `simple_server.py` - 简单HTTP服务器
+
+**功能**：监听指定端口，接收HTTP请求并返回预定义的JSON响应数据
+
+**用法**：
+```bash
+python simple_server.py [--port PORT] [--host HOST]
+```
+
+**参数**：
+- `--port`, `-p` - 可选，监听端口，默认：8080
+- `--host`, `-H` - 可选，监听地址，默认：0.0.0.0（监听所有网络接口）
+
+**说明**：
+- 启动一个简单的HTTP服务器，用于测试、调试和模拟API服务
+- 支持GET、POST、PUT、DELETE请求方法
+- 所有请求都返回相同的预定义JSON响应
+- POST和PUT请求会打印请求体内容
+- 自动处理JSON请求体的解析
+- 支持跨域请求（CORS）
+- 提供详细的请求日志，包括时间戳、请求方法和路径
+
+**响应格式**：
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "data": {
+    "name": "simple-server",
+    "version": "1.0"
+  }
+}
+```
+
+**依赖**：
+- Python 3.6+（使用标准库，无需额外安装包）
+
+**使用场景**：
+- API接口测试和调试
+- 前端开发时的模拟后端服务
+- 网络请求测试
+- 负载测试和性能测试
+
+**示例**：
+```bash
+# 使用默认端口8080
+python simple_server.py
+
+# 指定端口
+python simple_server.py --port 3000
+
+# 指定端口和监听地址（只监听本地）
+python simple_server.py --port 9000 --host 127.0.0.1
+
+# 使用短参数
+python simple_server.py -p 5000 -H 0.0.0.0
+```
+
+**测试示例**：
+```bash
+# 启动服务器
+python simple_server.py --port 8080
+
+# 在另一个终端测试GET请求
+curl http://localhost:8080
+
+# 测试POST请求
+curl -X POST http://localhost:8080 \
+  -H "Content-Type: application/json" \
+  -d '{"test": "data"}'
+
+# 测试PUT请求
+curl -X PUT http://localhost:8080 \
+  -H "Content-Type: application/json" \
+  -d '{"key": "value"}'
+
+# 测试DELETE请求
+curl -X DELETE http://localhost:8080
+```
+
+---
+
 ## 依赖要求
 
 ### 系统依赖
@@ -468,7 +811,7 @@ python send_kafka_template.py --topic test-topic --template_file template.json -
 
 安装所有Python依赖：
 ```bash
-pip install pydub edge-tts tqdm openai-whisper kafka-python
+pip install pydub edge-tts tqdm openai-whisper kafka-python Pillow
 ```
 
 ### 系统工具依赖
@@ -479,18 +822,19 @@ pip install pydub edge-tts tqdm openai-whisper kafka-python
 - **jq**：用于JSON解析（refresh_api_gateway_token.sh）
 - **docker**：用于容器管理（aws_jenkins_deployee_run_fe.sh）
 - **gawk**：用于高级文本处理（git_user_stats.sh）
+- **rsync**：用于文件同步（space-manager.sh）
 
 ### 安装系统工具（Ubuntu/Debian）
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y ffmpeg redis-tools curl jq docker.io gawk
+sudo apt-get install -y ffmpeg redis-tools curl jq docker.io gawk rsync
 ```
 
 ### 安装系统工具（macOS）
 
 ```bash
-brew install ffmpeg redis curl jq docker gawk
+brew install ffmpeg redis curl jq docker gawk rsync
 ```
 
 ---
@@ -534,26 +878,31 @@ chmod +x *.py
 
 | 功能类别 | 脚本列表 |
 |---------|---------|
-| 系统管理 | add_swap.sh, add_user_to_dev_group.sh, startup.sh |
+| 系统管理 | add_swap.sh, add_user_to_dev_group.sh, space-manager.sh, startup.sh |
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
 | Git工具 | git_nearest_direct_child_commit.sh, git_user_stats.sh |
+| Laravel工具 | laravel_diagnose.php |
+| Python工具 | pip_pkg_size.sh, png_info.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
 | 音视频 | play_audio.py, txt2voice.py, voice2txt.py |
-| 网络服务 | debug_server.py, send_kafka_template.py |
+| 网络服务 | debug_server.py, send_kafka_template.py, simple_server.py |
 
 ### 按语言分类
 
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
-| Bash | 10 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, refresh_api_gateway_token.sh, startup.sh |
-| Python | 5 | debug_server.py, play_audio.py, send_kafka_template.py, txt2voice.py, voice2txt.py |
+| Bash | 12 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
+| Python | 7 | debug_server.py, play_audio.py, png_info.py, send_kafka_template.py, simple_server.py, txt2voice.py, voice2txt.py |
+| PHP | 1 | laravel_diagnose.php |
 
 ---
 
 ## 更新日志
 
-- **2026** - 初始版本，包含15个实用脚本工具
+- **2026** - 初始版本，包含16个实用脚本工具
+- **2026** - 新增 pip 包大小统计脚本（pip_pkg_size.sh）
+- **2026** - 新增 PNG 图片信息分析脚本（png_info.py）
 - 所有脚本已添加详细注释和用户友好的交互提示
 
 ---
