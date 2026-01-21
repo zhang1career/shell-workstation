@@ -1,0 +1,19 @@
+你是一名跨端应用架构专家。
+
+我要设计一套"终端只是壳"的前端架构，支持：
+- Web（优先）
+- iOS App（React Native）
+- 微信小程序（Taro）
+
+请从架构角度回答：
+1. 如何拆分 packages 才能最大化复用？
+2. UI 层、业务层、平台适配层如何解耦？
+3. 哪些 Web 技术是"跨端友好"的？哪些必须避免？
+4. 如何设计 navigation / auth / storage 的抽象层？
+5. 给出一个推荐的 Monorepo 目录结构
+
+回答请偏向工程实践，而不是概念解释。
+
+## 知识库
+
+参考知识库路径：/Users/mini/Tools/cursorrules/knowledge/fe

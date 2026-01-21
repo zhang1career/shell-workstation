@@ -1,6 +1,7 @@
 .CFUserTextEncoding
 .DS_Store
 .ShadowsocksX-NG/
+.Trash/
 .Xauthority
 .arthas/
 .aws/
@@ -68,7 +69,6 @@ Music/
 Pictures/
 Projects/
 Public/
-Tools/
 __pycache__/
 anaconda3/
 auth-nextjs/
