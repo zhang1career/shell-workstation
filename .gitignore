@@ -3,6 +3,7 @@
 .ShadowsocksX-NG/
 .Trash/
 .Xauthority
+.apple/
 .arthas/
 .aws/
 .bash_history
@@ -79,3 +80,9 @@ joyCoder/
 logs/
 nltk_data/
 scikit_learn_data/
+
+# prs monorepo
+node_modules/
+dist/
+*.local
+.turbo/

@@ -424,6 +424,38 @@ PNG 图片信息
 
 ---
 
+### 206. `ios_screenshot_resize.py` - iOS App Store 截屏尺寸转换
+
+**功能**：将截屏图片转换为 App Store Connect 要求的尺寸，支持单张或批量、预设尺寸或自定义尺寸
+
+**用法**：
+```bash
+# 单张图，预设 iPhone 6.7" 竖版（1290 x 2796）
+python ios_screenshot_resize.py screenshot.png --preset iphone67
+
+# 自定义尺寸
+python ios_screenshot_resize.py screenshot.png --size 1290x2796
+
+# 批量转换目录下所有图片
+python ios_screenshot_resize.py ./screenshots/ --preset iphone67 --output ./out/
+```
+
+**参数**：
+- `input` - 必需，输入文件或目录路径
+- `--preset` / `-p` - 预设尺寸：iphone69, iphone67, iphone65, iphone63, iphone61, iphone55, iphone47, ipad129, ipad11 等
+- `--size` / `-s` - 自定义尺寸，如 `1290x2796`（与 --preset 二选一）
+- `--output` / `-o` - 输出目录，默认在输入同目录下创建 `ios_screenshots_out`
+- `--mode` / `-m` - 缩放模式：`fit`（留边适配）、`fill`（裁剪填满，默认）、`stretch`（拉伸）
+- `--suffix` - 输出文件名后缀，默认 `_ios`
+
+**依赖**：
+- Python 3.6+
+- Pillow (PIL)：`pip install Pillow`
+
+**说明**：输出为 JPEG，适合直接上传到 App Store Connect。尺寸依据 [Apple 截屏规范](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)。
+
+---
+
 ## 数据处理脚本
 
 ### 300. `filter_row_with_blank_field.sh` - 过滤空白字段行
@@ -645,6 +677,191 @@ python voice2txt.py audio.mp3 --output transcript.txt
 
 ---
 
+### 403. `wav2mp3.py` - WAV 转 MP3 音频格式转换
+
+**功能**：将 WAV 音频文件转换为 MP3 格式，支持单文件或批量转换，可自定义采样率和比特率
+
+**用法**：
+```bash
+python wav2mp3.py <input_path> <output_path> [options]
+```
+
+**参数**：
+- `input_path` - 必需，输入文件或目录路径
+- `output_path` - 必需，输出目录路径
+- `-r`, `--sample-rate` - 可选，采样率 (Hz)，默认：44100
+- `-b`, `--bitrate` - 可选，比特率 (kbps)，默认：256
+
+**说明**：
+- 支持单文件和批量转换模式
+- 目录模式下会递归查找所有 WAV 文件
+- 批量转换时保持原有目录结构
+- 自动创建输出目录
+
+**依赖**：
+- pydub：`pip install pydub`
+- ffmpeg（系统安装）
+
+**示例**：
+```bash
+# 转换单个文件（使用默认参数：44.1kHz, 256kbps）
+python wav2mp3.py input.wav ./output/
+
+# 批量转换目录下所有 WAV 文件
+python wav2mp3.py ./wav_files/ ./mp3_files/
+
+# 自定义采样率和比特率
+python wav2mp3.py input.wav ./output/ -r 48000 -b 320
+
+# 使用较低比特率（节省空间）
+python wav2mp3.py ./wav_files/ ./mp3_files/ -b 128
+
+# CD 品质（44.1kHz, 320kbps）
+python wav2mp3.py ./recordings/ ./compressed/ -r 44100 -b 320
+```
+
+**输出示例**：
+```
+============================================================
+WAV to MP3 Converter
+============================================================
+输入路径: ./wav_files
+输出路径: ./mp3_files
+采样率: 44100 Hz
+比特率: 256 kbps
+文件数量: 5
+============================================================
+[1/5] 转换: track01.wav -> track01.mp3
+  ✓ 成功
+[2/5] 转换: track02.wav -> track02.mp3
+  ✓ 成功
+...
+============================================================
+转换完成: 成功 5, 失败 0
+============================================================
+```
+
+**常用参数组合**：
+| 用途 | 采样率 | 比特率 | 说明 |
+|------|--------|--------|------|
+| 高品质 | 48000 | 320 | 接近无损品质 |
+| CD 品质 | 44100 | 256 | 默认设置，推荐 |
+| 标准品质 | 44100 | 192 | 一般音乐播放 |
+| 语音/播客 | 22050 | 128 | 适合人声 |
+| 小文件 | 22050 | 64 | 最小文件大小 |
+
+---
+
+### 404. `mix_sound.py` - 双轨音频混音
+
+**功能**：将两个音频文件混音后通过系统扬声器实时播放，支持音量、延迟、淡入淡出、EQ、压缩与限幅
+
+**用法**：
+```bash
+python mix_sound.py <audio1> <audio2> [options]
+```
+
+**参数**：
+- `audio1` - 必需，第一个音频文件路径
+- `audio2` - 必需，第二个音频文件路径
+- `--vol1` - 可选，第一轨音量（数值如 1.0 或分贝如 -6dB），默认：1.0
+- `--vol2` - 可选，第二轨音量，默认：1.0
+- `--delay2` - 可选，第二轨延迟秒数，默认：0
+- `--loop2` - 可选，第二轨循环播放
+- `--fadein` - 可选，两轨淡入时长（秒），默认：0
+- `--fadeout` - 可选，两轨淡出时长（秒），默认：0
+- `--eq1` - 可选，第一轨 FFmpeg EQ/滤镜，如 `highpass=100`
+- `--eq2` - 可选，第二轨 FFmpeg EQ/滤镜
+- `--compress` - 可选，混音后加压缩（acompressor）
+- `--limit` - 可选，混音后加限幅（alimiter），防止削波
+
+**说明**：
+- 使用 ffmpeg 做混音与编码，ffplay 从管道播放，不生成中间文件
+- 音量支持数值（1.0）或分贝（-6dB）
+- 第二轨可设置延迟、循环、淡入淡出
+- 可选 EQ 滤镜（如 highpass、equalizer）与后处理（压缩、限幅）
+
+**依赖**：
+- Python 3.6+（仅用标准库）
+- ffmpeg、ffplay（系统安装，通常随 ffmpeg 一起提供）
+
+**示例**：
+```bash
+# 基本混音（等音量）
+python mix_sound.py voice.wav bgm.mp3
+
+# 人声大、背景小
+python mix_sound.py voice.wav bgm.mp3 --vol1 1.0 --vol2 0.3
+
+# 背景音循环 + 淡入淡出
+python mix_sound.py voice.wav bgm.mp3 --loop2 --fadein 2 --fadeout 3
+
+# 第二轨延迟 0.5 秒
+python mix_sound.py a.wav b.wav --delay2 0.5
+
+# 加限幅防止削波
+python mix_sound.py a.wav b.wav --limit
+
+# 查看帮助
+python mix_sound.py --help
+```
+
+**注意事项**：
+- 需已安装 ffmpeg 与 ffplay；若未找到会提示错误并退出
+- 按 Ctrl+C 可中断播放
+
+---
+
+### 405. `change_sound_volume.py` - MP3 响度归一化
+
+**功能**：使用 EBU R128 标准对 MP3 进行响度归一化，尽量不损失声音细节
+
+**用法**：
+```bash
+python change_sound_volume.py <input_mp3> [output_mp3] [options]
+```
+
+**参数**：
+- `input_mp3` - 必需，输入 MP3 文件路径
+- `output_mp3` - 可选，输出 MP3 文件路径（默认：输入名_normalized.mp3）
+- `-l`, `--lufs` - 可选，目标响度 LUFS，常用 -16（广播/播客）或 -14（流媒体），默认：-16
+- `-t`, `--tp` - 可选，真峰值限制 dB，默认：-1.5
+- `-r`, `--lra` - 可选，响度范围 LRA，默认：11.0
+
+**说明**：
+- 使用 ffmpeg loudnorm 滤镜实现 EBU R128 响度归一化
+- 输出为 LAME V0 高质量 MP3（约 245 kbps VBR）
+- 可指定目标响度、真峰值限制和响度范围
+- 输出路径默认与输入同目录，文件名加 `_normalized`
+
+**依赖**：
+- Python 3.6+（仅用标准库）
+- ffmpeg（需包含 loudnorm 滤镜与 libmp3lame 编码器）
+
+**示例**：
+```bash
+# 使用默认 -16 LUFS，输出为 input_normalized.mp3
+python change_sound_volume.py input.mp3
+
+# 指定输出文件和目标响度 -14 LUFS
+python change_sound_volume.py input.mp3 output_normalized.mp3 -l -14
+
+# 仅指定目标响度，输出使用默认命名
+python change_sound_volume.py input.mp3 -l -14
+
+# 自定义真峰值和响度范围
+python change_sound_volume.py input.mp3 out.mp3 -l -16 -t -2.0 -r 11
+
+# 查看帮助
+python change_sound_volume.py --help
+```
+
+**注意事项**：
+- 输出路径不能与输入路径相同，否则会报错
+- 若未找到 ffmpeg 或 ffmpeg 执行失败，会提示错误并退出
+
+---
+
 ## 网络服务脚本
 
 ### 500. `debug_server.py` - HTTP调试服务器
@@ -816,7 +1033,7 @@ pip install pydub edge-tts tqdm openai-whisper kafka-python Pillow
 
 ### 系统工具依赖
 
-- **ffmpeg**：用于音频处理（play_audio.py, txt2voice.py, voice2txt.py）
+- **ffmpeg / ffplay**：用于音频处理（play_audio.py, txt2voice.py, voice2txt.py, mix_sound.py, change_sound_volume.py）
 - **redis-cli**：用于Redis操作（parse_uri_ip_and_write_cache.sh, refresh_api_gateway_token.sh）
 - **curl**：用于HTTP请求（refresh_api_gateway_token.sh）
 - **jq**：用于JSON解析（refresh_api_gateway_token.sh）
@@ -882,10 +1099,10 @@ chmod +x *.py
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
 | Git工具 | git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, ios_screenshot_resize.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
-| 音视频 | play_audio.py, txt2voice.py, voice2txt.py |
+| 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py |
 | 网络服务 | debug_server.py, send_kafka_template.py, simple_server.py |
 
 ### 按语言分类
@@ -893,7 +1110,7 @@ chmod +x *.py
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
 | Bash | 12 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 7 | debug_server.py, play_audio.py, png_info.py, send_kafka_template.py, simple_server.py, txt2voice.py, voice2txt.py |
+| Python | 11 | change_sound_volume.py, debug_server.py, ios_screenshot_resize.py, mix_sound.py, play_audio.py, png_info.py, send_kafka_template.py, simple_server.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
@@ -903,6 +1120,9 @@ chmod +x *.py
 - **2026** - 初始版本，包含16个实用脚本工具
 - **2026** - 新增 pip 包大小统计脚本（pip_pkg_size.sh）
 - **2026** - 新增 PNG 图片信息分析脚本（png_info.py）
+- **2026** - 新增 WAV 转 MP3 音频转换脚本（wav2mp3.py）
+- **2026** - 新增双轨音频混音脚本（mix_sound.py），并补充使用说明与注释
+- **2026** - 新增 MP3 响度归一化脚本（change_sound_volume.py）
 - 所有脚本已添加详细注释和用户友好的交互提示
 
 ---
