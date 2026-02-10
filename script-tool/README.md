@@ -456,6 +456,44 @@ python ios_screenshot_resize.py ./screenshots/ --preset iphone67 --output ./out/
 
 ---
 
+### 207. `font_preview.py` - 字体 PDF 预览
+
+**功能**：根据 TTF/OTF 字体文件生成一页 PDF 预览，包含英文与中文示例句，并可选择用系统默认程序打开
+
+**用法**：
+```bash
+python font_preview.py <字体路径> [--no-open] [-o 输出路径]
+```
+
+**参数**：
+- `字体路径` - 必需，字体文件路径（.ttf 或 .otf）
+- `--no-open` - 可选，生成 PDF 后不自动打开
+- `-o`, `--output` - 可选，输出 PDF 路径（默认使用临时文件）
+
+**说明**：
+- 支持 TTF、OTF（含 CFF 轮廓）格式
+- 预览页使用 36pt 字号，展示 "The quick brown fox" 与 "中文字体测试"
+- 未指定 `-o` 时使用系统临时目录，脚本结束后由系统清理
+- 若字体缺少部分字形（如西文字体无中文），fpdf2 可能输出缺失字形提示，不影响 PDF 生成
+
+**依赖**：
+- Python 3.6+
+- fpdf2：`pip install fpdf2`
+
+**示例**：
+```bash
+# 生成预览并自动打开
+python font_preview.py /path/to/GenRyuMin2TW-M.otf
+
+# 仅生成到指定文件，不打开
+python font_preview.py ./MyFont.ttf --no-open -o preview.pdf
+
+# 使用模块方式运行
+python -m font_preview ./MyFont.otf --no-open
+```
+
+---
+
 ## 数据处理脚本
 
 ### 300. `filter_row_with_blank_field.sh` - 过滤空白字段行
@@ -862,6 +900,91 @@ python change_sound_volume.py --help
 
 ---
 
+### 406. `pick_sound.py` - 音高拾音
+
+**功能**：从麦克风实时采集音频，检测音高（基频），将不同音高分别保存为 WAV 文件
+
+**用法**：
+```bash
+python pick_sound.py <输出目录>
+```
+
+**参数**：
+- `输出目录` - 必需，保存各音高 WAV 文件的目录（不存在会自动创建）
+
+**说明**：
+- 使用 sounddevice 从默认麦克风录音，librosa YIN 算法检测基频
+- 音高范围：C2 ~ C7；每个音高只保存一次，文件名如 `C4.wav`、`A#5.wav`
+- 低于能量阈值的片段视为静音/环境噪声，不参与检测
+- 按 **Enter** 键结束拾音（无需管理员权限，跨平台可用）
+- 每个音高最多保存 1 秒，44.1 kHz 单声道 WAV
+
+**依赖**：
+- Python 3.6+
+- sounddevice、soundfile、librosa、numpy
+
+**安装依赖**：
+```bash
+pip install sounddevice soundfile librosa numpy
+```
+
+**示例**：
+```bash
+# 将采样保存到当前目录下的 samples
+python pick_sound.py ./samples
+
+# 保存到指定目录
+python pick_sound.py ~/Music/piano_notes
+```
+
+**注意事项**：
+- 需允许终端/IDE 使用麦克风
+- 环境安静、音源清晰时识别更稳定
+
+---
+
+### 407. `filter_sound.py` - 音高 WAV 滤波与音量均衡
+
+**功能**：对按音高命名的 WAV 文件进行音高校验、带通滤波和音量均衡后输出
+
+**用法**：
+```bash
+python filter_sound.py <输入目录> <输出目录>
+```
+
+**参数**：
+- `输入目录` - 必需，存放待处理的 WAV 文件（文件名即期望音高，如 C4.wav、A#5.wav）
+- `输出目录` - 必需，处理后的 WAV 输出目录（不存在会自动创建）
+
+**说明**：
+- 仅处理扩展名为 `.wav` 的文件；文件名（不含扩展名）视为期望音高
+- 使用 YIN 检测实际音高，仅当「检测音高」与「文件名音高」一致时才通过校验
+- 通过校验的音频会做以该音高为中心的带通滤波（默认 ±1 八度），再归一化到目标 RMS 音量后写出
+- 未通过校验的文件会打印原因（无法识别音高 / 音高不匹配），不写入输出目录
+
+**依赖**：
+- Python 3.6+
+- numpy、librosa、soundfile、scipy
+
+**安装依赖**：
+```bash
+pip install numpy librosa soundfile scipy
+```
+
+**示例**：
+```bash
+# 将 samples 下 WAV 校验、滤波、均衡后输出到 filtered
+python filter_sound.py ./samples ./filtered
+
+# 指定绝对路径
+python filter_sound.py ~/Music/raw_notes ~/Music/clean_notes
+```
+
+**注意事项**：
+- 输入文件建议为单音、音高清晰的 WAV（如由 pick_sound.py 采集），校验与滤波效果更好
+
+---
+
 ## 网络服务脚本
 
 ### 500. `debug_server.py` - HTTP调试服务器
@@ -1028,7 +1151,7 @@ curl -X DELETE http://localhost:8080
 
 安装所有Python依赖：
 ```bash
-pip install pydub edge-tts tqdm openai-whisper kafka-python Pillow
+pip install pydub edge-tts tqdm openai-whisper kafka-python Pillow fpdf2
 ```
 
 ### 系统工具依赖
@@ -1099,10 +1222,10 @@ chmod +x *.py
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
 | Git工具 | git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py, ios_screenshot_resize.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
-| 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py |
+| 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py |
 | 网络服务 | debug_server.py, send_kafka_template.py, simple_server.py |
 
 ### 按语言分类
@@ -1110,7 +1233,7 @@ chmod +x *.py
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
 | Bash | 12 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 11 | change_sound_volume.py, debug_server.py, ios_screenshot_resize.py, mix_sound.py, play_audio.py, png_info.py, send_kafka_template.py, simple_server.py, txt2voice.py, voice2txt.py, wav2mp3.py |
+| Python | 14 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png_info.py, send_kafka_template.py, simple_server.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
@@ -1123,6 +1246,9 @@ chmod +x *.py
 - **2026** - 新增 WAV 转 MP3 音频转换脚本（wav2mp3.py）
 - **2026** - 新增双轨音频混音脚本（mix_sound.py），并补充使用说明与注释
 - **2026** - 新增 MP3 响度归一化脚本（change_sound_volume.py）
+- **2026** - 新增音高拾音脚本（pick_sound.py），并补充注释与用户提示
+- **2026** - 新增音高 WAV 滤波与音量均衡脚本（filter_sound.py），并补充注释与用户提示
+- **2026** - 新增字体 PDF 预览脚本（font_preview.py），支持 TTF/OTF 生成预览并可选打开
 - 所有脚本已添加详细注释和用户友好的交互提示
 
 ---
