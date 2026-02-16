@@ -494,6 +494,117 @@ python -m font_preview ./MyFont.otf --no-open
 
 ---
 
+### 208. `gen_patch.sh` - Git 差异补丁生成
+
+**功能**：将指定 Git 仓库中相对于 HEAD 的所有修改（未暂存 + 已暂存）导出为 patch 文件
+
+**用法**：
+```bash
+./gen_patch.sh <target_dir> <output_patch_file>
+```
+
+**参数**：
+- `target_dir` - 必需，目标 Git 仓库的目录路径
+- `output_patch_file` - 必需，输出的 patch 文件路径（如 `my_changes.patch`）
+
+**说明**：
+- 生成的 patch 包含工作区与暂存区相对于 HEAD 的所有修改
+- 可用于备份修改、跨仓库迁移代码、代码审查等场景
+- 应用 patch 时使用 `git apply <patch_file>` 或 `git am <patch_file>`
+
+**依赖**：
+- bash
+- git
+
+**示例**：
+```bash
+# 将当前项目的修改导出为 patch
+./gen_patch.sh . ./my_changes.patch
+
+# 指定其他项目目录
+./gen_patch.sh /path/to/my_project ../backup.patch
+
+# 在目标项目中应用补丁
+cd /path/to/old_project
+git apply /path/to/my_changes.patch
+
+# 若应用失败可尝试三方合并
+git apply --3way /path/to/my_changes.patch
+```
+
+---
+
+### 209. `png_cutout.py` - PNG 棋盘格转透明
+
+**功能**：将输入 PNG 中“棋盘格”颜色（灰白格）的像素改为透明并保存为新 PNG。常见导出错误会把透明区域变成 #fff / #c0c0c0 等灰白格，本脚本将这些像素的 alpha 置为 0。
+
+**用法**：
+```bash
+python png_cutout.py <input.png> [-o output.png]
+```
+
+**参数**：
+- `input` - 必需，输入 PNG 文件路径
+- `-o`, `--output` - 可选，输出 PNG 路径，默认：输入同目录下「输入名.transparent.png」
+
+**说明**：
+- 判定为棋盘格的条件：像素接近灰色（R≈G≈B，通道差 ≤ 15）且偏亮（平均亮度 ≥ 170）
+- 输出路径未指定时自动生成为「输入名.transparent.png」；不允许输出与输入相同路径，以免覆盖原图
+- 运行后会提示已保存路径及「设为透明的像素数 / 总像素数」
+
+**依赖**：
+- Python 3.6+
+- Pillow (PIL)：`pip install Pillow`
+
+**示例**：
+```bash
+# 默认输出为 input.transparent.png
+python png_cutout.py image.png
+
+# 指定输出文件
+python png_cutout.py image.png -o image_transparent.png
+python png_cutout.py image.png --output image_clean.png
+```
+
+---
+
+### 210. `png2jpg.py` - PNG 转 JPG 图片格式转换
+
+**功能**：将 PNG 图片转换为 JPG 格式。若 PNG 有透明通道，会先以白色填充后再导出。
+
+**用法**：
+```bash
+python png2jpg.py <input.png> [output.jpg] [-q N]
+```
+
+**参数**：
+- `input` - 必需，输入 PNG 文件路径
+- `output` - 可选，输出 JPG 路径，默认：与输入同目录、同主名的 .jpg
+- `-q`, `--quality` - 可选，JPEG 质量 1–100（默认 95）
+
+**说明**：
+- JPG 不支持透明通道，若 PNG 含透明区域，会以白色填充后再导出
+- 输出路径未指定时，自动生成为「输入名.jpg」
+
+**依赖**：
+- Python 3.6+
+- Pillow (PIL)：`pip install Pillow`
+
+**示例**：
+```bash
+# 默认输出为 logo.jpg
+python png2jpg.py logo.png
+
+# 指定输出文件
+python png2jpg.py logo.png logo.jpg
+
+# 指定 JPEG 质量
+python png2jpg.py logo.png --quality 90
+python png2jpg.py logo.png -q 80
+```
+
+---
+
 ## 数据处理脚本
 
 ### 300. `filter_row_with_blank_field.sh` - 过滤空白字段行
@@ -985,6 +1096,51 @@ python filter_sound.py ~/Music/raw_notes ~/Music/clean_notes
 
 ---
 
+### 408. `trim_audio_silence.py` - 音频去静音并裁剪前段
+
+**功能**：去掉音频开头、结尾的静音，保留有声音区域；可选用 `--lifetime` 只保留有声音开始后的前 N 毫秒。支持 mp3、wav、ogg 等常见格式。
+
+**用法**：
+```bash
+python trim_audio_silence.py <输入音频> <输出音频> [--lifetime N] [--pre_roll N] [--post_roll N] [--silence_thresh dBFS] [--min_silence_len MS]
+```
+
+**参数**：
+- `input` - 必需，输入音频文件路径
+- `output` - 必需，输出音频文件路径（格式由扩展名决定，如 .mp3 / .wav）
+- `--lifetime` - 可选，只保留有声音开始后的前 N 毫秒
+- `--pre_roll` - 可选，有声音前保留多少毫秒（默认 30）
+- `--post_roll` - 可选，有声音后保留多少毫秒（默认 50）
+- `--silence_thresh` - 可选，静音阈值 dBFS，低于此视为静音（默认 -40）
+- `--min_silence_len` - 可选，判定静音的最小连续长度 毫秒（默认 20）
+
+**说明**：
+- 通过静音检测找到第一段和最后一段有声音的区间，去掉前后静音
+- `pre_roll` / `post_roll` 用于在有声音前后多保留一点，避免截断开头或结尾
+- `--lifetime` 适合裁剪长录音，只保留前 N 毫秒有效内容
+- 若提示「未检测到有效声音」，可尝试调低 `--silence_thresh` 或调小 `--min_silence_len`
+
+**依赖**：
+- Python 3.6+
+- pydub：`pip install pydub`
+- 系统需安装 ffmpeg（pydub 用于解码/编码多种格式）
+
+**示例**：
+```bash
+# 去首尾静音，输出格式由扩展名决定
+python trim_audio_silence.py input.mp3 output.mp3
+python trim_audio_silence.py rec.wav out.wav
+
+# 只保留有声音开始后的前 5 秒
+python trim_audio_silence.py rec.wav short.wav --lifetime 5000
+
+# 调整前后过渡区与静音判定
+python trim_audio_silence.py rec.mp3 short.mp3 --pre_roll 50 --post_roll 80
+python trim_audio_silence.py rec.mp3 out.mp3 --silence_thresh -35 --min_silence_len 30
+```
+
+---
+
 ## 网络服务脚本
 
 ### 500. `debug_server.py` - HTTP调试服务器
@@ -1156,7 +1312,7 @@ pip install pydub edge-tts tqdm openai-whisper kafka-python Pillow fpdf2
 
 ### 系统工具依赖
 
-- **ffmpeg / ffplay**：用于音频处理（play_audio.py, txt2voice.py, voice2txt.py, mix_sound.py, change_sound_volume.py）
+- **ffmpeg / ffplay**：用于音频处理（play_audio.py, txt2voice.py, voice2txt.py, mix_sound.py, change_sound_volume.py, trim_audio_silence.py）
 - **redis-cli**：用于Redis操作（parse_uri_ip_and_write_cache.sh, refresh_api_gateway_token.sh）
 - **curl**：用于HTTP请求（refresh_api_gateway_token.sh）
 - **jq**：用于JSON解析（refresh_api_gateway_token.sh）
@@ -1220,20 +1376,20 @@ chmod +x *.py
 |---------|---------|
 | 系统管理 | add_swap.sh, add_user_to_dev_group.sh, space-manager.sh, startup.sh |
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
-| Git工具 | git_nearest_direct_child_commit.sh, git_user_stats.sh |
+| Git工具 | gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py, ios_screenshot_resize.py, font_preview.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
-| 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py |
+| 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py, trim_audio_silence.py |
 | 网络服务 | debug_server.py, send_kafka_template.py, simple_server.py |
 
 ### 按语言分类
 
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
-| Bash | 12 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 14 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png_info.py, send_kafka_template.py, simple_server.py, txt2voice.py, voice2txt.py, wav2mp3.py |
+| Bash | 13 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
+| Python | 17 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
@@ -1249,6 +1405,10 @@ chmod +x *.py
 - **2026** - 新增音高拾音脚本（pick_sound.py），并补充注释与用户提示
 - **2026** - 新增音高 WAV 滤波与音量均衡脚本（filter_sound.py），并补充注释与用户提示
 - **2026** - 新增字体 PDF 预览脚本（font_preview.py），支持 TTF/OTF 生成预览并可选打开
+- **2026** - 新增 Git 差异补丁生成脚本（gen_patch.sh），支持将工作区与暂存区修改导出为 patch 文件
+- **2026** - 重写 PNG 透明化脚本（png_cutout.py），将棋盘格（灰白格）像素改为透明，输入必传、输出可选（默认输入名.transparent.png）
+- **2026** - 新增音频去静音并裁剪前段脚本（trim_audio_silence.py），支持去首尾静音与按毫秒截取有声音前段
+- **2026** - 新增 PNG 转 JPG 脚本（png2jpg.py），支持透明通道以白色填充、可调质量
 - 所有脚本已添加详细注释和用户友好的交互提示
 
 ---
