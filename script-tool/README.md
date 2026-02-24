@@ -605,6 +605,37 @@ python png2jpg.py logo.png -q 80
 
 ---
 
+### 211. `image_filter.py` - 图片滤镜效果
+
+**功能**：对 JPG 图片应用滤镜效果，目前支持高斯模糊。
+
+**用法**：
+```bash
+python image_filter.py <input.jpg> <output.jpg> [--filter gaussian_blur] [--radius N]
+```
+
+**参数**：
+- `input` - 必需，输入 JPG 图片文件路径
+- `output` - 必需，输出图片文件路径
+- `-f`, `--filter` - 可选，滤镜类型，目前仅支持 gaussian_blur（默认）
+- `-r`, `--radius` - 可选，高斯模糊半径（像素），数值越大模糊越强（默认 5）
+
+**说明**：
+- 依赖 Pillow (PIL)，需先安装：`pip install Pillow`
+- 输出格式与输入保持一致（JPG）
+
+**示例**：
+```bash
+# 使用默认半径 5 的高斯模糊
+python image_filter.py photo.jpg output_blurred.jpg
+
+# 指定模糊半径
+python image_filter.py photo.jpg output.jpg --filter gaussian_blur --radius 10
+python image_filter.py photo.jpg output.jpg -r 8
+```
+
+---
+
 ## 数据处理脚本
 
 ### 300. `filter_row_with_blank_field.sh` - 过滤空白字段行
@@ -1378,7 +1409,7 @@ chmod +x *.py
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
 | Git工具 | gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, ios_screenshot_resize.py, font_preview.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
 | 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py, trim_audio_silence.py |
@@ -1389,7 +1420,7 @@ chmod +x *.py
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
 | Bash | 13 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 17 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
+| Python | 18 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
@@ -1409,6 +1440,7 @@ chmod +x *.py
 - **2026** - 重写 PNG 透明化脚本（png_cutout.py），将棋盘格（灰白格）像素改为透明，输入必传、输出可选（默认输入名.transparent.png）
 - **2026** - 新增音频去静音并裁剪前段脚本（trim_audio_silence.py），支持去首尾静音与按毫秒截取有声音前段
 - **2026** - 新增 PNG 转 JPG 脚本（png2jpg.py），支持透明通道以白色填充、可调质量
+- **2026** - 新增图片滤镜脚本（image_filter.py），支持高斯模糊
 - 所有脚本已添加详细注释和用户友好的交互提示
 
 ---
