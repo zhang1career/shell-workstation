@@ -605,6 +605,79 @@ python png2jpg.py logo.png -q 80
 
 ---
 
+### 212. `clear-worktree-interactive.sh` - Git Worktree 交互式清理
+
+**功能**：交互式清理 Git Worktree，逐个询问是否删除
+
+**用法**：
+```bash
+./clear-worktree-interactive.sh [--dry-run]
+```
+
+**参数**：
+- `--dry-run` - 可选，仅模拟执行，不实际删除（用于预览将要执行的操作）
+
+**说明**：
+- 脚本会列出当前仓库的所有 worktree，逐个询问是否删除
+- 显示每个 worktree 的路径和分支信息
+- **保护机制**：当前分支和主分支（main/master）会自动跳过，不允许删除
+- 当前工作目录所在的 worktree 会特别标记提示
+- 删除完成后会自动执行 `git worktree prune` 清理失效引用
+- 使用 `--dry-run` 可安全预览操作，不会实际修改任何内容
+
+**依赖**：
+- bash
+- git
+
+**示例**：
+```bash
+# 交互式清理 worktree
+./clear-worktree-interactive.sh
+
+# 模拟运行，仅预览将要执行的操作
+./clear-worktree-interactive.sh --dry-run
+```
+
+**输出示例**：
+```
+🔧 Git Worktree 交互式清理工具
+
+📋 发现 4 个 worktree
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[1/4] 📁 /path/to/main
+        🌿 [main]
+        🔒 主分支，已保护（自动跳过）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[2/4] 📁 /path/to/develop
+        🌿 [develop]
+        🔒 当前分支，已保护（自动跳过）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[3/4] 📁 /path/to/feature-branch
+        🌿 [feature-branch]
+        是否删除此 worktree? [y/N]: y
+        🗑️  正在删除...
+        ✅ 已删除
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[4/4] 📁 /path/to/bugfix
+        🌿 [bugfix]
+        是否删除此 worktree? [y/N]: n
+        ⏭️  已跳过
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ 操作完成
+   已删除: 1 个 worktree
+   已保护: 2 个 worktree
+   已跳过: 1 个 worktree
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**注意事项**：
+- 删除 worktree 会同时删除其工作目录，请确保没有未提交的更改
+- 当前分支和主分支（main/master）会自动保护，无法删除
+- 建议先使用 `--dry-run` 预览操作
+
+---
+
 ### 211. `image_filter.py` - 图片滤镜效果
 
 **功能**：对 JPG 图片应用滤镜效果，目前支持高斯模糊。
@@ -1407,7 +1480,7 @@ chmod +x *.py
 |---------|---------|
 | 系统管理 | add_swap.sh, add_user_to_dev_group.sh, space-manager.sh, startup.sh |
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
-| Git工具 | gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
+| Git工具 | clear-worktree-interactive.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
 | Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
@@ -1419,7 +1492,7 @@ chmod +x *.py
 
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
-| Bash | 13 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
+| Bash | 14 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, clear-worktree-interactive.sh, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
 | Python | 18 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
@@ -1441,6 +1514,7 @@ chmod +x *.py
 - **2026** - 新增音频去静音并裁剪前段脚本（trim_audio_silence.py），支持去首尾静音与按毫秒截取有声音前段
 - **2026** - 新增 PNG 转 JPG 脚本（png2jpg.py），支持透明通道以白色填充、可调质量
 - **2026** - 新增图片滤镜脚本（image_filter.py），支持高斯模糊
+- **2026** - 新增 Git Worktree 交互式清理脚本（clear-worktree-interactive.sh），支持逐个选择删除、模拟运行
 - 所有脚本已添加详细注释和用户友好的交互提示
 
 ---
