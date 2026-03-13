@@ -1,19 +1,20 @@
 #!/usr/bin/env bash
 #
-# 功能：交互式清理 Git Worktree，逐个询问是否删除
-# 用法：./clear-worktree-interactive.sh [--dry-run]
+# 功能：交互式清理 Git Worktree 及其关联分支
+# 用法：./clean_worktree_interactive.sh [--dry-run]
 # 参数：
 #   --dry-run  - 可选，仅模拟执行，不实际删除（用于预览将要执行的操作）
 # 说明：
 #   - 脚本会列出当前仓库的所有 worktree，逐个询问是否删除
+#   - 删除 worktree 时会同时删除其关联的本地分支
 #   - 删除完成后会自动执行 git worktree prune 清理失效引用
 #   - 使用 --dry-run 可安全预览操作，不会实际修改任何内容
 # 示例：
-#   ./clear-worktree-interactive.sh
-#   ./clear-worktree-interactive.sh --dry-run
+#   ./clean_worktree_interactive.sh
+#   ./clean_worktree_interactive.sh --dry-run
 #
 # 注意：
-#   - 删除 worktree 会同时删除其工作目录，请确保没有未提交的更改
+#   - 删除 worktree 会同时删除其工作目录和关联分支，请确保没有未提交的更改
 #   - 主 worktree（bare 仓库的主目录）通常不应被删除
 #   - 当前分支和主分支（main/master）会自动跳过，不允许删除
 #
@@ -103,6 +104,7 @@ echo ""
 
 # 统计变量
 DELETED_COUNT=0
+BRANCH_DELETED_COUNT=0
 SKIPPED_COUNT=0
 PROTECTED_COUNT=0
 INDEX=0
@@ -163,25 +165,44 @@ for WT in $ALL_WORKTREES; do
     echo "        ⚠️  这是当前工作目录所在的 worktree"
   fi
 
-  # 交互式询问用户
+  # 交互式询问用户（提示将同时删除 worktree 和分支）
+  if [ -n "$BRANCH_NAME" ]; then
+    echo "        ⚠️  删除将同时移除 worktree 和分支 [$BRANCH_NAME]"
+  fi
+
   if [ "$IS_CURRENT" = true ]; then
-    read -p "        是否删除此 worktree? (当前目录，谨慎!) [y/N]: " ANSWER
+    read -p "        是否删除? (当前目录，谨慎!) [y/N]: " ANSWER
   else
-    read -p "        是否删除此 worktree? [y/N]: " ANSWER
+    read -p "        是否删除? [y/N]: " ANSWER
   fi
 
   # 处理用户响应
   if [[ "$ANSWER" =~ ^[Yy]$ ]]; then
     if [ "$DRY_RUN" = true ]; then
-      echo "        🔸 (模拟) 将删除: $WT_REAL"
+      echo "        🔸 (模拟) 将删除 worktree: $WT_REAL"
+      if [ -n "$BRANCH_NAME" ]; then
+        echo "        🔸 (模拟) 将删除分支: $BRANCH_NAME"
+      fi
     else
-      echo "        🗑️  正在删除..."
+      # 删除 worktree
+      echo "        🗑️  正在删除 worktree..."
       if git worktree remove --force "$WT_REAL" 2>/dev/null; then
-        echo "        ✅ 已删除"
+        echo "        ✅ worktree 已删除"
       else
-        echo "        ❌ 删除失败（可能是主 worktree 或有未提交更改）"
+        echo "        ❌ worktree 删除失败（可能是主 worktree 或有未提交更改）"
         ((SKIPPED_COUNT++)) || true
         continue
+      fi
+
+      # 删除关联分支
+      if [ -n "$BRANCH_NAME" ]; then
+        echo "        🗑️  正在删除分支 [$BRANCH_NAME]..."
+        if git branch -D "$BRANCH_NAME" 2>/dev/null; then
+          echo "        ✅ 分支已删除"
+          ((BRANCH_DELETED_COUNT++)) || true
+        else
+          echo "        ⚠️  分支删除失败（可能已不存在或有其他引用）"
+        fi
       fi
     fi
     ((DELETED_COUNT++)) || true
@@ -212,8 +233,9 @@ if [ "$DRY_RUN" = true ]; then
   echo "   已跳过: $SKIPPED_COUNT 个 worktree"
 else
   echo "✅ 操作完成"
-  echo "   已删除: $DELETED_COUNT 个 worktree"
-  echo "   已保护: $PROTECTED_COUNT 个 worktree"
-  echo "   已跳过: $SKIPPED_COUNT 个 worktree"
+  echo "   已删除 worktree: $DELETED_COUNT 个"
+  echo "   已删除分支: $BRANCH_DELETED_COUNT 个"
+  echo "   已保护: $PROTECTED_COUNT 个"
+  echo "   已跳过: $SKIPPED_COUNT 个"
 fi
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

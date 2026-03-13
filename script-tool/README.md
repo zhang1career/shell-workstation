@@ -156,6 +156,48 @@ sudo ./startup.sh
 
 ---
 
+### 104. `clean_docker.sh` - 关闭 Docker 进程并清理脏数据
+
+**功能**：关闭 Docker 相关进程并可选清理未使用的镜像、容器、卷和构建缓存
+
+**用法**：
+```bash
+sudo ./clean_docker.sh [--clean-data] [--force]
+```
+
+**参数**：
+- `--clean-data` - 可选，清理 Docker 脏数据（未使用镜像、容器、卷、构建缓存）
+- `--force`, `-f` - 可选，跳过交互确认，直接执行
+- `-h`, `--help` - 显示帮助信息
+
+**说明**：
+- **需要 root 权限**，建议使用 `sudo` 执行
+- 适用于 **macOS**，会停止 Docker 的 launchctl 服务（vmnetd、socket）
+- 执行顺序：
+  1. 若指定 `--clean-data`，先清理脏数据（需 Docker 尚在运行）
+  2. 终止所有 Docker 相关进程
+  3. 停止 system 级 Docker 服务
+  4. 清理残留进程
+- `--clean-data` 会执行 `docker system prune -af --volumes`，将删除未使用的镜像、容器和卷，请确认已备份重要数据
+
+**依赖**：
+- bash
+- docker（仅在使用 `--clean-data` 时需要）
+
+**示例**：
+```bash
+# 仅关闭 Docker 进程
+sudo ./clean_docker.sh
+
+# 关闭进程并清理脏数据
+sudo ./clean_docker.sh --clean-data
+
+# 非交互模式（适用于脚本调用）
+sudo ./clean_docker.sh --clean-data --force
+```
+
+---
+
 ## 开发工具脚本
 
 ### 200. `aws_jenkins_deployee_run_fe.sh` - 部署前端Docker容器
@@ -605,13 +647,51 @@ python png2jpg.py logo.png -q 80
 
 ---
 
-### 212. `clear-worktree-interactive.sh` - Git Worktree 交互式清理
+### 210a. `jpg2png.py` - JPG 转 PNG 图片格式转换
 
-**功能**：交互式清理 Git Worktree，逐个询问是否删除
+**功能**：将 JPG/JPEG 图片转换为 PNG 格式。PNG 为无损格式，适合需要保留图片质量或后续编辑的场景。
 
 **用法**：
 ```bash
-./clear-worktree-interactive.sh [--dry-run]
+python jpg2png.py <input.jpg> [output.png] [-c N]
+```
+
+**参数**：
+- `input` - 必需，输入 JPG/JPEG 文件路径
+- `output` - 可选，输出 PNG 路径，默认：与输入同目录、同主名的 .png
+- `-c`, `--compression` - 可选，PNG 压缩级别 0–9，0 无压缩最快，9 最小文件（默认 6）
+
+**说明**：
+- PNG 为无损格式，转换后不会丢失 JPG 已有的细节
+- 支持 CMYK 等模式的 JPG，会自动转换为 RGB
+- 输出路径未指定时，自动生成为「输入名.png」
+
+**依赖**：
+- Python 3.6+
+- Pillow (PIL)：`pip install Pillow`
+
+**示例**：
+```bash
+# 默认输出为 photo.png
+python jpg2png.py photo.jpg
+
+# 指定输出文件
+python jpg2png.py photo.jpg photo.png
+
+# 指定 PNG 压缩级别（9 为最小文件）
+python jpg2png.py photo.jpg --compression 9
+python jpg2png.py photo.jpg -c 0
+```
+
+---
+
+### 212. `clean_worktree_interactive.sh` - Git Worktree 交互式清理
+
+**功能**：交互式清理 Git Worktree 及其关联分支，逐个询问是否删除
+
+**用法**：
+```bash
+./clean_worktree_interactive.sh [--dry-run]
 ```
 
 **参数**：
@@ -620,6 +700,7 @@ python png2jpg.py logo.png -q 80
 **说明**：
 - 脚本会列出当前仓库的所有 worktree，逐个询问是否删除
 - 显示每个 worktree 的路径和分支信息
+- **删除 worktree 时会同时删除其关联的本地分支**
 - **保护机制**：当前分支和主分支（main/master）会自动跳过，不允许删除
 - 当前工作目录所在的 worktree 会特别标记提示
 - 删除完成后会自动执行 `git worktree prune` 清理失效引用
@@ -632,10 +713,10 @@ python png2jpg.py logo.png -q 80
 **示例**：
 ```bash
 # 交互式清理 worktree
-./clear-worktree-interactive.sh
+./clean_worktree_interactive.sh
 
 # 模拟运行，仅预览将要执行的操作
-./clear-worktree-interactive.sh --dry-run
+./clean_worktree_interactive.sh --dry-run
 ```
 
 **输出示例**：
@@ -655,26 +736,113 @@ python png2jpg.py logo.png -q 80
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [3/4] 📁 /path/to/feature-branch
         🌿 [feature-branch]
-        是否删除此 worktree? [y/N]: y
-        🗑️  正在删除...
-        ✅ 已删除
+        ⚠️  删除将同时移除 worktree 和分支 [feature-branch]
+        是否删除? [y/N]: y
+        🗑️  正在删除 worktree...
+        ✅ worktree 已删除
+        🗑️  正在删除分支 [feature-branch]...
+        ✅ 分支已删除
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [4/4] 📁 /path/to/bugfix
         🌿 [bugfix]
-        是否删除此 worktree? [y/N]: n
+        ⚠️  删除将同时移除 worktree 和分支 [bugfix]
+        是否删除? [y/N]: n
         ⏭️  已跳过
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✅ 操作完成
-   已删除: 1 个 worktree
-   已保护: 2 个 worktree
-   已跳过: 1 个 worktree
+   已删除 worktree: 1 个
+   已删除分支: 1 个
+   已保护: 2 个
+   已跳过: 1 个
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 **注意事项**：
-- 删除 worktree 会同时删除其工作目录，请确保没有未提交的更改
+- 删除 worktree 会同时删除其工作目录**和关联分支**，请确保没有未提交的更改
 - 当前分支和主分支（main/master）会自动保护，无法删除
 - 建议先使用 `--dry-run` 预览操作
+
+---
+
+### 213. `list_git_modifying_branches` - 列出文件曾被修改过的分支
+
+**功能**：列出指定文件在本地分支中曾被修改过的所有分支，并显示各分支上最近的修改提交
+
+**用法**：
+```bash
+./list_git_modifying_branches <file-path>
+```
+
+**参数**：
+- `file-path` - 必需，要查询的文件路径（相对于仓库根目录或绝对路径）
+
+**说明**：
+- 遍历所有本地分支（refs/heads/），检查该文件是否在该分支历史中被修改
+- 若有修改，输出分支名及该分支上对该文件的最近 3 次提交（hash、日期、摘要）
+- 用于快速定位哪些分支曾改动过某个文件
+
+**依赖**：
+- bash
+- git
+
+**示例**：
+```bash
+# 查询 README 被哪些分支修改过
+./list_git_modifying_branches README.md
+
+# 查询源码文件
+./list_git_modifying_branches src/main.py
+```
+
+---
+
+### 211a. `djvu2pdf.py` - DJVU 转 PDF 文档格式转换
+
+**功能**：将 DJVU 文件转换为 PDF 格式，支持中文路径与中文内容
+
+**用法**：
+```bash
+python djvu2pdf.py <input> [output]
+python djvu2pdf.py <输入目录> --output-dir <输出目录>
+```
+
+**参数**：
+- `input` - 必需，输入 DJVU 文件或目录路径
+- `output` - 可选，单文件时指定输出 PDF 路径（默认：输入同目录、同主名.pdf）
+- `-o`, `--output-dir` - 可选，批量转换时的输出目录
+
+**说明**：
+- 支持单文件和批量转换（输入目录时处理其中的 .djvu/.djv 文件）
+- **支持中文路径和中文内容**：Python 3 使用 UTF-8，DJVU/PDF 可正确保留中文
+- 使用 djvulibre 的 `ddjvu` 命令进行转换
+
+**依赖**：
+- Python 3.6+（仅用标准库）
+- djvulibre（提供 ddjvu 命令）
+
+**安装 djvulibre**：
+```bash
+# macOS
+brew install djvulibre
+
+# Ubuntu/Debian
+sudo apt install djvulibre-bin
+```
+
+**示例**：
+```bash
+# 单文件，输出为 book.pdf
+python djvu2pdf.py book.djvu
+
+# 指定输出路径
+python djvu2pdf.py book.djvu output.pdf
+
+# 支持中文文件名
+python djvu2pdf.py 中文书名.djvu
+
+# 批量转换目录
+python djvu2pdf.py ./djvu_books/ --output-dir ./pdf_out/
+```
 
 ---
 
@@ -1447,6 +1615,7 @@ brew install ffmpeg redis curl jq docker gawk rsync
 - `add_swap.sh` - 需要root权限
 - `add_user_to_dev_group.sh` - 需要root权限
 - `startup.sh` - 需要root权限
+- `clean_docker.sh` - 需要root权限（关闭 Docker 进程与系统服务）
 
 使用方式：
 ```bash
@@ -1478,11 +1647,11 @@ chmod +x *.py
 
 | 功能类别 | 脚本列表 |
 |---------|---------|
-| 系统管理 | add_swap.sh, add_user_to_dev_group.sh, space-manager.sh, startup.sh |
+| 系统管理 | add_swap.sh, add_user_to_dev_group.sh, space-manager.sh, startup.sh, clean_docker.sh |
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
-| Git工具 | clear-worktree-interactive.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
+| Git工具 | clean_worktree_interactive.sh, list_git_modifying_branches, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, jpg2png.py, djvu2pdf.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
 | 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py, trim_audio_silence.py |
@@ -1492,30 +1661,14 @@ chmod +x *.py
 
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
-| Bash | 14 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, clear-worktree-interactive.sh, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 18 | change_sound_volume.py, debug_server.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
+| Bash | 16 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, clean_worktree_interactive.sh, clean_docker.sh, list_git_modifying_branches, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
+| Python | 20 | change_sound_volume.py, debug_server.py, djvu2pdf.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, jpg2png.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
 
 ## 更新日志
-
-- **2026** - 初始版本，包含16个实用脚本工具
-- **2026** - 新增 pip 包大小统计脚本（pip_pkg_size.sh）
-- **2026** - 新增 PNG 图片信息分析脚本（png_info.py）
-- **2026** - 新增 WAV 转 MP3 音频转换脚本（wav2mp3.py）
-- **2026** - 新增双轨音频混音脚本（mix_sound.py），并补充使用说明与注释
-- **2026** - 新增 MP3 响度归一化脚本（change_sound_volume.py）
-- **2026** - 新增音高拾音脚本（pick_sound.py），并补充注释与用户提示
-- **2026** - 新增音高 WAV 滤波与音量均衡脚本（filter_sound.py），并补充注释与用户提示
-- **2026** - 新增字体 PDF 预览脚本（font_preview.py），支持 TTF/OTF 生成预览并可选打开
-- **2026** - 新增 Git 差异补丁生成脚本（gen_patch.sh），支持将工作区与暂存区修改导出为 patch 文件
-- **2026** - 重写 PNG 透明化脚本（png_cutout.py），将棋盘格（灰白格）像素改为透明，输入必传、输出可选（默认输入名.transparent.png）
-- **2026** - 新增音频去静音并裁剪前段脚本（trim_audio_silence.py），支持去首尾静音与按毫秒截取有声音前段
-- **2026** - 新增 PNG 转 JPG 脚本（png2jpg.py），支持透明通道以白色填充、可调质量
-- **2026** - 新增图片滤镜脚本（image_filter.py），支持高斯模糊
-- **2026** - 新增 Git Worktree 交互式清理脚本（clear-worktree-interactive.sh），支持逐个选择删除、模拟运行
-- 所有脚本已添加详细注释和用户友好的交互提示
+s
 
 ---
 
