@@ -685,6 +685,37 @@ python jpg2png.py photo.jpg -c 0
 
 ---
 
+### 210b. `md2pdf.py` - Markdown 转 PDF
+
+**功能**：将 Markdown 文件转换为 PDF，优先使用 Playwright + Chromium（中文支持更好）。
+
+**用法**：
+```bash
+python md2pdf.py <input.md> [output.pdf]
+```
+
+**参数**：
+- `input.md` - 必需，输入 Markdown 文件路径
+- `output.pdf` - 可选，输出 PDF 路径（默认与输入同目录同名 `.pdf`）
+
+**说明**：
+- 先将 Markdown 渲染为 HTML（支持表格、围栏代码块、目录）
+- 优先使用 Playwright 的 Chromium 生成 PDF；若未安装则尝试 `pdfkit`
+- 推荐方式（中文显示更稳定）：
+  - `pip install markdown playwright`
+  - `playwright install chromium`
+
+**示例**：
+```bash
+# 输出为 README.pdf
+python md2pdf.py README.md
+
+# 指定输出路径
+python md2pdf.py README.md ./output/resume.pdf
+```
+
+---
+
 ### 212. `clean_worktree_interactive.sh` - Git Worktree 交互式清理
 
 **功能**：交互式清理 Git Worktree 及其关联分支，逐个询问是否删除
@@ -1651,7 +1682,7 @@ chmod +x *.py
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
 | Git工具 | clean_worktree_interactive.sh, list_git_modifying_branches, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, jpg2png.py, djvu2pdf.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, jpg2png.py, md2pdf.py, djvu2pdf.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
 | 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py, trim_audio_silence.py |
@@ -1662,7 +1693,7 @@ chmod +x *.py
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
 | Bash | 16 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, clean_worktree_interactive.sh, clean_docker.sh, list_git_modifying_branches, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 20 | change_sound_volume.py, debug_server.py, djvu2pdf.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, jpg2png.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
+| Python | 21 | change_sound_volume.py, debug_server.py, djvu2pdf.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, jpg2png.py, md2pdf.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
