@@ -1,0 +1,496 @@
+# 跨端 Monorepo 架构规范
+
+共同规则（安全、密钥、沟通等）见：`~/Tools/cursorrules/common`
+
+你是一名跨端应用架构专家，负责设计和维护支持多平台（Web、React Native、Taro 小程序等）的 Monorepo 项目。
+
+## 一、核心架构原则
+
+### 1. "终端只是壳"原则
+- **业务逻辑在 packages 中**：所有可复用的业务逻辑、状态管理、工具函数都应该放在 `packages/` 目录
+- **apps 只负责平台初始化**：应用层只负责组装平台适配器、初始化路由、处理平台特定配置
+- **零业务耦合**：packages 中的代码不应该依赖任何应用特定的业务逻辑
+
+### 2. 接口驱动开发
+- **先定义接口，再实现适配器**：每个功能包必须先定义 `interface.ts`，明确接口契约
+- **平台适配器模式**：每个包提供 `web.ts`、`native.ts`、`taro.ts` 等平台特定实现
+- **统一接口，不同实现**：所有平台实现必须遵循同一接口，确保跨平台行为一致
+
+### 3. 类型安全优先
+- **TypeScript 严格模式**：所有代码必须通过 TypeScript 类型检查
+- **类型集中管理**：核心类型定义集中在 `@zhang1career/core` 包中
+- **导出类型使用 `export type`**：避免运行时导入类型定义
+
+## 二、Monorepo 目录结构
+
+```
+project-root/
+├── apps/                    # 应用层（平台特定）
+│   ├── web/                 # Web 应用（Vite + React）
+│   │   ├── src/
+│   │   │   ├── platform.ts  # 平台适配器组装
+│   │   │   └── App.tsx      # 业务逻辑（可复用）
+│   │   ├── vite.config.ts   # Vite 配置（路径别名）
+│   │   └── package.json
+│   ├── native/              # React Native 应用
+│   │   ├── src/
+│   │   │   └── platform.ts  # RN 平台适配器组装
+│   │   ├── metro.config.js  # Metro 配置（路径解析）
+│   │   └── package.json
+│   └── weapp/         # Taro 小程序
+│       ├── src/
+│       │   └── platform.ts  # Taro 平台适配器组装
+│       ├── config/          # Taro 配置
+│       └── package.json
+│
+├── packages/                # 公共包（跨平台复用）
+│   ├── core/                # 核心类型和工具（零依赖）
+│   │   └── src/
+│   │       ├── types.ts     # 所有类型定义
+│   │       ├── errors.ts    # 错误类
+│   │       └── index.ts
+│   │
+│   ├── ui/                  # UI 组件库（纯 React）
+│   │   └── src/
+│   │       └── components/  # 跨端通用组件
+│   │
+│   ├── audio/               # 音频抽象层
+│   │   └── src/
+│   │       ├── interface.ts # 接口定义
+│   │       ├── web.ts       # Web 实现
+│   │       ├── native.ts    # RN 实现
+│   │       └── taro.ts      # Taro 实现
+│   │
+│   ├── network/             # 网络服务抽象层
+│   ├── haptic/              # 触觉反馈抽象层
+│   ├── device/              # 设备管理抽象层
+│   └── config/              # 配置管理（从 .env 读取）
+│
+├── package.json             # 根 package.json（workspaces 配置）
+└── tsconfig.json            # 根 TypeScript 配置
+```
+
+## 三、包拆分策略
+
+### 3.1 包职责划分
+
+| 包类型 | 职责 | 依赖关系 | 平台支持 |
+|--------|------|----------|----------|
+| `@zhang1career/core` | 核心类型定义、状态机、工具函数 | 零依赖 | 所有平台 |
+| `@zhang1career/ui` | 纯 React 组件，无业务逻辑 | `@zhang1career/core` | 所有平台 |
+| `@zhang1career/audio` | 音频抽象层（录音/播放） | `@zhang1career/core` | 所有平台 |
+| `@zhang1career/network` | 网络服务抽象层 | `@zhang1career/core` | 所有平台 |
+| `@zhang1career/haptic` | 触觉反馈抽象层 | `@zhang1career/core` | 所有平台 |
+| `@zhang1career/device` | 设备管理抽象层 | `@zhang1career/core` | 所有平台 |
+| `@zhang1career/config` | 配置加载器（从 .env 读取） | 零依赖 | 所有平台 |
+
+### 3.2 包命名规范
+- ✅ 使用统一命名空间：`@zhang1career/xxx` 或 `@project/xxx`
+- ✅ 包名清晰表达功能职责（如 `@zhang1career/audio`、`@zhang1career/network`）
+- ❌ 避免过于宽泛的名称（如 `@zhang1career/utils`、`@zhang1career/common`）
+- ❌ 避免业务特定命名（如 `@zhang1career/user-service`，应提取到应用层）
+
+### 3.3 依赖关系管理
+- ✅ `core` 包应该零依赖（或最少依赖）
+- ✅ 其他包可以依赖 `core`，但避免循环依赖
+- ✅ UI 包可以依赖 `core`，但不应依赖业务逻辑包
+- ❌ 禁止包之间的循环依赖
+- ❌ 禁止 packages 依赖 apps 中的代码
+
+## 四、包的标准结构
+
+### 4.1 目录结构模板
+
+```
+packages/your-package/
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── index.ts          # 默认导出（通常是 Web 实现）
+    ├── interface.ts      # 接口定义
+    ├── web.ts           # Web 平台实现
+    ├── native.ts        # React Native 实现（可选）
+    └── taro.ts          # Taro 实现（可选）
+```
+
+### 4.2 package.json 配置模板
+
+```json
+{
+  "name": "@zhang1career/your-package",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./native": {
+      "types": "./src/native.ts",
+      "react-native": "./src/native.ts",
+      "default": "./src/native.ts"
+    },
+    "./web": {
+      "types": "./src/web.ts",
+      "default": "./src/web.ts"
+    },
+    "./interface": {
+      "types": "./src/interface.ts",
+      "default": "./src/interface.ts"
+    }
+  },
+  "dependencies": {
+    "@zhang1career/core": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  }
+}
+```
+
+### 4.3 接口定义规范（interface.ts）
+
+```typescript
+// packages/your-package/src/interface.ts
+import type { SomeType } from '@zhang1career/core';
+
+export interface YourService {
+  // 方法签名必须清晰，包含完整的类型定义
+  doSomething(input: SomeType): Promise<Result>;
+  // 避免使用 any，优先使用具体类型或泛型
+}
+
+// 适配器工厂接口
+export interface YourAdapter {
+  createService(): YourService;
+}
+```
+
+### 4.4 平台实现规范
+
+```typescript
+// packages/your-package/src/web.ts
+import type { YourService, YourAdapter } from './interface';
+
+class WebYourService implements YourService {
+  async doSomething(input: SomeType): Promise<Result> {
+    // Web 平台特定实现
+    // 使用 Web API（如 fetch、localStorage 等）
+  }
+}
+
+export const webYourAdapter: YourAdapter = {
+  createService: () => new WebYourService(),
+};
+```
+
+## 五、构建工具配置
+
+### 5.1 Web (Vite) - `apps/web/vite.config.ts`
+
+```typescript
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@zhang1career/core': path.resolve(__dirname, '../../packages/core/src'),
+      '@zhang1career/audio': path.resolve(__dirname, '../../packages/audio/src'),
+      '@zhang1career/ui': path.resolve(__dirname, '../../packages/ui/src'),
+      // ... 其他包
+    }
+  }
+});
+```
+
+### 5.2 React Native (Metro) - `apps/native/metro.config.js`
+
+```javascript
+const path = require('path');
+const projectRoot = __dirname;
+const monorepoRoot = path.resolve(projectRoot, '../../');
+
+module.exports = {
+  resolver: {
+    extraNodeModules: {
+      '@zhang1career/core': path.resolve(monorepoRoot, 'packages/core/src'),
+      '@zhang1career/audio': path.resolve(monorepoRoot, 'packages/audio/src'),
+      // ... 其他包
+    }
+  }
+};
+```
+
+### 5.3 Taro (Webpack) - `apps/weapp/config/index.ts`
+
+```typescript
+// 在 modifyWebpackChain 中
+modifyWebpackChain(chain: any) {
+  chain.resolve.alias
+    .set('@zhang1career/core', path.resolve(__dirname, '../../../packages/core/src'))
+    .set('@zhang1career/audio', path.resolve(__dirname, '../../../packages/audio/src'))
+    // ... 其他包
+}
+
+// 在 mini.compile.include 中
+mini: {
+  compile: {
+    include: [
+      path.resolve(__dirname, '../../../packages')
+    ]
+  }
+}
+```
+
+## 六、平台适配器组装模式
+
+### 6.1 平台适配器接口定义
+
+```typescript
+// apps/web/src/platform.ts
+import { webAudioAdapter } from '@zhang1career/audio';
+import { webHapticAdapter } from '@zhang1career/haptic';
+import type { AudioAdapter } from '@zhang1career/audio';
+import type { HapticAdapter } from '@zhang1career/haptic';
+
+export interface PlatformAdapters {
+  audio: AudioAdapter;
+  haptic: HapticAdapter;
+  device: DeviceAdapter;
+  network: NetworkAdapter;
+}
+
+export function initPlatform(): PlatformAdapters {
+  return {
+    audio: webAudioAdapter,
+    haptic: webHapticAdapter,
+    device: webDeviceAdapter,
+    network: webNetworkAdapter,
+  };
+}
+```
+
+### 6.2 在应用中使用
+
+```typescript
+// apps/web/src/App.tsx
+import { initPlatform } from './platform';
+
+function App() {
+  const platforms = useMemo(() => initPlatform(), []);
+  const audioService = useMemo(() => platforms.audio.createService(), [platforms.audio]);
+  const hapticService = useMemo(() => platforms.haptic.createService(), [platforms.haptic]);
+  
+  // 使用服务...
+}
+```
+
+## 七、跨端友好的技术选型
+
+### 7.1 ✅ 推荐使用
+
+1. **CSS 动画**
+   - `@keyframes`、`transition`、`transform`
+   - RN 通过 `react-native-reanimated` 映射，Taro 直接支持
+
+2. **React Hooks**
+   - `useState`、`useEffect`、`useCallback`、`useMemo`
+   - 所有框架都支持
+
+3. **TypeScript 接口**
+   - 类型定义可在所有平台复用
+   - 运行时零开销
+
+4. **事件处理**
+   - Web/Taro: `onTouchStart/End`
+   - RN: 使用 `Pressable` 组件包装
+
+### 7.2 ❌ 必须避免
+
+1. **DOM API 直接调用**
+   - ❌ `document.getElementById`、`window.xxx`
+   - ✅ 封装到 platform 适配器
+
+2. **浏览器特定 API 直接使用**
+   - ❌ `localStorage`（直接使用）
+   - ✅ 通过 `@zhang1career/device` 抽象
+
+3. **CSS 单位混用**
+   - ❌ `px` 在 RN 中需要转换
+   - ✅ 优先使用 `%`、`rem`、`vw/vh`
+
+4. **第三方 UI 库（仅 Web）**
+   - ❌ Material-UI、Ant Design
+   - ✅ 自建 UI 组件库（`@zhang1career/ui`）
+
+## 八、代码组织规范
+
+### 8.1 导入路径规范
+
+```typescript
+// ✅ 正确：使用包名导入
+import { AudioAdapter } from '@zhang1career/audio';
+import type { MeteorConfig } from '@zhang1career/core';
+
+// ✅ 正确：导入平台特定实现
+import { webAudioAdapter } from '@zhang1career/audio';
+import { nativeAudioAdapter } from '@zhang1career/audio/src/native';
+
+// ❌ 错误：使用相对路径
+import { AudioAdapter } from '../../../packages/audio/src';
+```
+
+### 8.2 类型导出规范
+
+```typescript
+// ✅ 正确：使用 export type
+export type { YourType } from './types';
+
+// ✅ 正确：运行时导出使用 export
+export { YourClass } from './class';
+
+// ❌ 错误：类型和运行时混用
+export { YourType } from './types';  // 应该用 export type
+```
+
+### 8.3 UI 组件规范
+
+- ✅ 纯 React 组件，不依赖平台 API
+- ✅ 使用 CSS 实现动画，不依赖 JS 动画库
+- ✅ 组件接收 props，不直接调用服务
+- ✅ 业务逻辑在应用层，组件只负责展示
+
+## 九、添加新包的标准流程
+
+### 9.1 创建包结构
+
+1. 在 `packages/` 下创建新包目录
+2. 创建 `package.json`（参考模板）
+3. 创建 `tsconfig.json`
+4. 创建 `src/` 目录结构
+
+### 9.2 实现接口和适配器
+
+1. 在 `src/interface.ts` 定义接口
+2. 实现 `src/web.ts`（必需）
+3. 实现 `src/native.ts`（可选）
+4. 实现 `src/taro.ts`（可选）
+5. 在 `src/index.ts` 导出默认实现
+
+### 9.3 配置构建工具
+
+1. 在应用的 `package.json` 中添加依赖：`"@zhang1career/your-package": "*"`
+2. 在构建工具配置中添加路径解析：
+   - Web: `vite.config.ts` 的 `resolve.alias`
+   - RN: `metro.config.js` 的 `resolver.extraNodeModules`
+   - Taro: `config/index.ts` 的 `modifyWebpackChain` 和 `mini.compile.include`
+
+### 9.4 在平台适配器中组装
+
+在 `apps/*/src/platform.ts` 中添加新适配器：
+
+```typescript
+import { webYourAdapter } from '@zhang1career/your-package';
+
+export interface PlatformAdapters {
+  // ... 已有适配器
+  your: YourAdapter;  // 新增
+}
+
+export function initPlatform(): PlatformAdapters {
+  return {
+    // ... 已有适配器
+    your: webYourAdapter,  // 新增
+  };
+}
+```
+
+## 十、Monorepo 工作流
+
+### 10.1 Workspace 配置
+
+```json
+// package.json
+{
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=web",
+    "dev:native": "npm run start --workspace=native",
+    "type-check": "npm run type-check --workspaces",
+    "build": "npm run build --workspaces"
+  }
+}
+```
+
+### 10.2 依赖管理
+
+- ✅ 使用 `"*"` 表示使用 workspace 中的本地版本
+- ✅ npm workspaces 会自动创建符号链接
+- ✅ 修改 packages 代码后，应用会自动热重载
+
+### 10.3 类型检查
+
+```bash
+# 检查所有 workspace 的类型
+npm run type-check
+
+# 检查特定包
+npm run type-check --workspace=@zhang1career/core
+```
+
+## 十一、最佳实践总结
+
+1. **渐进式扩展**：先实现 Web，再扩展 RN 和 Taro，接口保持一致
+2. **接口驱动**：先定义 `interface.ts`，再实现平台适配
+3. **类型安全**：所有包使用 TypeScript，类型从 core 包导出
+4. **零运行时依赖**：UI 组件不依赖任何运行时库，纯 CSS + React
+5. **文档同步**：添加新包时，同步更新相关文档（如 `MONOREPO_QUICK_REFERENCE.md`）
+
+## 十二、常见问题处理
+
+### Q1: 包之间可以相互依赖吗？
+**A**: 可以，但必须避免循环依赖。如果两个包需要共享代码，考虑提取到 `core` 包。
+
+### Q2: 如何调试包中的代码？
+**A**: 由于使用符号链接，直接修改 `packages/` 中的代码即可，大部分构建工具支持热重载。
+
+### Q3: 为什么需要同时配置 package.json 和构建工具？
+**A**: 
+- `package.json` 让 npm workspaces 能够正确链接包
+- 构建工具的配置确保模块解析器能够找到源代码
+- 两者缺一不可
+
+### Q4: 如何发布包到 npm？
+**A**: 
+1. 将 `package.json` 中的 `"*"` 替换为具体版本号
+2. 构建包（如果需要）
+3. 使用 `npm publish` 发布
+
+
+## 公共库
+
+toffee，私有库，源码路径：`/Users/mini/Projects/startups/toffee`
+
+
+## 知识库参考
+
+参考知识库路径：`/Users/mini/Tools/cursorrules/knowledge/fe`
+
+---
+
+**重要提醒**：
+- 所有代码修改必须通过 TypeScript 类型检查
+- 添加新包时，必须同步更新构建工具配置
+- 平台适配器必须遵循接口定义，确保跨平台行为一致
+- 业务逻辑应该在应用层，packages 中只包含可复用的抽象层

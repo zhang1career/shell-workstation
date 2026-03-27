@@ -6,8 +6,14 @@
 set -e
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMON="$DIR/common"
+OPENSKILLS="$DIR/../openskills/AGENTS.md"
 RAW_DIR="$DIR/raw-rules"
 OUTPUT_DIR="$DIR/output-rules"
+
+if [[ ! -f "$OPENSKILLS" ]]; then
+  echo "错误: 未找到 openskills AGENTS.md: $OPENSKILLS" >&2
+  exit 1
+fi
 
 INPUT_FILENAME="$1"
 OUTPUT_PATH="$2"
@@ -32,9 +38,29 @@ else
   OUTFILE="$OUTPUT_DIR/$INPUT_FILENAME"
 fi
 
+# 将 common 中的 {{OPENSKILLS}} 替换为 openskills/AGENTS.md 全文（不修改原始 common 模版）
+expand_common_with_openskills() {
+  perl -0777 -e '
+    my ($openskills_path, $common_path) = @ARGV;
+    open my $f, "<", $openskills_path or die "$openskills_path: $!\n";
+    local $/;
+    my $skills = <$f>;
+    close $f;
+    open $f, "<", $common_path or die "$common_path: $!\n";
+    my $out = <$f>;
+    close $f;
+    my $ph = "{{OPENSKILLS}}";
+    my $len = length($ph);
+    while ((my $i = index($out, $ph)) >= 0) {
+      substr($out, $i, $len) = $skills;
+    }
+    print $out;
+  ' "$OPENSKILLS" "$COMMON"
+}
+
 {
   echo "--- common"
-  cat "$COMMON"
+  expand_common_with_openskills
   echo ""
   echo "--- $INPUT_FILENAME"
   cat "$INPUT_FILE"
