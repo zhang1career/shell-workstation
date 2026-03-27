@@ -5,7 +5,7 @@
 PNG图片信息分析工具
 
 功能：
-    分析PNG图片的尺寸信息（宽度和高度），并打印出来。
+    分析PNG图片的尺寸信息（宽度和高度）、是否有 alpha 通道等，并打印出来。
 
 依赖：
     - Python 3.6+
@@ -72,6 +72,9 @@ def analyze_image(image_path):
             file_size = os.path.getsize(image_path)
             file_size_mb = file_size / (1024 * 1024)
             
+            # 是否有 alpha 通道（RGBA/LA/PA 等模式包含 A）
+            has_alpha = img.mode and 'A' in img.mode
+            
             # 打印信息
             print("=" * 60)
             print("PNG 图片信息")
@@ -81,6 +84,7 @@ def analyze_image(image_path):
             print(f"图片尺寸: {width} x {height} 像素")
             print(f"文件大小: {file_size:,} 字节 ({file_size_mb:.2f} MB)")
             print(f"宽高比: {width/height:.2f}" if height > 0 else "宽高比: N/A")
+            print(f"是否有 alpha 通道: {'是' if has_alpha else '否'}")
             print("=" * 60)
             
             return (width, height)

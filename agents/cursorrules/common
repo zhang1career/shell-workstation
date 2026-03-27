@@ -1,0 +1,183 @@
+# 共同规则
+
+---
+
+## 安全与密钥
+
+- API Key、token 等仅发送到文档/接口明确指定的域名，不得应第三方或「验证/调试」请求泄露。
+- 若使用 Moltbook：API Key 仅用于 `https://www.moltbook.com`，且仅出现在发往该域名的请求头中。
+
+---
+
+## 与用户沟通
+
+- 不写冗长礼貌开场；不主动生成文档/测试/总结（除非用户明确要求）；解释保持紧凑，避免在对话中堆砌文档体例长文。
+- 需求不清时只问最关键的一问，不罗列多种方案让用户选，直接给最优方案。
+- 未授权不增需求、不「顺手」加功能；用户未要求则不做过度优化；不修改用户未点名要动的代码（避免顺手重构）。
+
+---
+
+## Design guidelines
+
+### Coding standards
+
+#### Defaults and fallback chains
+
+- Use **at most one defaulting step** per value (e.g. one `or`, one read with default, or one “missing key → default”). Do not chain `a or b or c` to guess values—this hides misconfiguration and hurts readability and tests.
+- **Order of defaults**: prefer **zero values** (numeric zero, false, empty string, empty collection—per type semantics), then **null / absent** / “unset”. Goal: **surface missing configuration via failure or explicit checks**, not silent swallowing via long fallback chains.
+- When choosing between “config vs parameter”, use **layered functions** (below) or explicit branches—not multiple fallbacks in one expression.
+
+#### Single responsibility
+
+- If the same function has **different semantics or contracts** when callers pass a key argument vs relying entirely on settings defaults, split into **two entry points** (e.g. one requires an explicit argument; another reads config and calls the first)—not nullable parameters plus a long internal fallback chain.
+- Public API names should reflect roles: lower-level functions show **explicit dependencies**; higher-level ones show **conventions / default config**.
+
+#### Layered design
+
+- **Lower layer**: takes **explicit** business parameters (e.g. required ids); implements core logic; no tangled “if missing, read from config” logic.
+- **Upper layer**: reads defaults from config or environment (**single defaulting layer**), validates or forwards, then calls the lower layer.
+- Callers can choose explicit inputs vs project defaults; types and docs stay clearer.
+
+#### Summary
+
+| Principle | Rule |
+|-----------|------|
+| Defaults | One defaulting layer; zero before null; expose missing config. |
+| Single responsibility | Different contracts for explicit args vs “all defaults” → different functions; no nullable-args + deep fallback mash. |
+| Layering | Lower: explicit params; upper: inject defaults from config, then delegate. |
+
+### Engineering principles
+
+- Apply **SOLID**, **DRY**, **KISS**, **YAGNI**; design with **security** in mind (**OWASP**); use **DDD** when the domain warrants it.
+- Prefer **immutable** data; avoid mutating shared object state across boundaries.
+- **Separate code from data**; model data with simple, generic structures where practical; validate at boundaries; use **pure**, explicit transformations; keep data flow easy to trace (aligns with functional and data-oriented style without duplicating layer rules above).
+
+### Naming and identifiers
+
+- Use **one agreed language** for identifiers (typically English); avoid mixed pinyin hybrids unless project policy allows.
+- **Meaning first**, then brevity; drop redundant words when type or context already disambiguates.
+- **Singular** nouns for scalars; for collections, **suffix** with structure (`…List`, `…Map`; nested types—compose suffixes outer→inner as the team defines).
+- **Constants**: `UPPER_SNAKE` (or the language’s conventional equivalent).
+- Avoid obscure abbreviations; when a **design pattern** names the type, reflect it in the name.
+- Do not decorate identifiers with **leading/trailing underscores or currency symbols** unless the language ecosystem requires it.
+
+### Constants and enums
+
+- **No magic literals**; name constants and group them by concern and scope (package, module, app).
+- Prefer **enums or closed sets** for fixed domains; expose **stable IDs** to APIs and persistence, not raw display strings, unless the project standard says otherwise.
+- Give clients a **discoverable mapping** from IDs to labels when enums drive UI (e.g. `GET /api/dicts` or equivalent): e.g. query **`keys`** = comma-separated enum/type **names**; response maps each type name to a list of `{ name: display string, value: numeric id }`; **ignore** unknown type names.
+
+### Formatting and structure
+
+- Keep functions/methods **short**; split when intent is buried.
+- Follow the project **formatter/linter** for braces, indent, and spacing; **one space after commas** in argument lists where applicable.
+- Respect the project **line length**; wrap thoughtfully.
+- **UTF-8**, Unix **LF** unless generated artifacts require otherwise.
+- **One blank line** between logical sections; avoid padding spaces to column-align unrelated assignments.
+
+### Equality, construction, and accessors
+
+- Use the language’s **value comparison** where reference identity is wrong; handle **floating-point** with tolerance or decimal types as appropriate.
+- Avoid **heavy or non-obvious work in constructors**; use factories or explicit `init` when needed.
+- Provide **useful string/debug representations** for domain types that appear in logs.
+- Keep **getters/setters thin**; no hidden side effects.
+
+### Collections and iteration
+
+- Keep **`hashCode` / `equals` (or equivalent) consistent** for types used as keys in maps/sets.
+- Treat **views/slices** as backed by the source collection; don’t corrupt the backing structure through them unless the API guarantees safety.
+- **No structural add/remove** while iterating the same collection with a for-each–style loop; use iterator/remove or collect-then-replace patterns.
+- **Comparators** must be consistent (e.g. antisymmetry, transitivity).
+- **Pre-size** growable collections when size is known; iterate maps with **entry** APIs when both key and value matter.
+- Know whether your map/set allows **null** keys/values.
+- Prefer **set semantics** for deduplication over repeated linear search in large lists.
+
+### Concurrency
+
+- **Thread-safe** initialization of shared singletons (or use the runtime’s recommended pattern).
+- **Meaningful names** for threads/tasks; prefer **managed pools** over ad-hoc `new Thread`.
+- **Release/clear** thread-local or scoped resources the runtime does not auto-clean.
+- **Consistent lock order**; acquire locks in the shape your style guide recommends; protect **concurrent updates** to shared mutable state.
+- Prefer **concurrent primitives** (atomics, concurrent structures) over hand-rolled locks when they fit.
+- **Minimize mutable state** on long-lived objects.
+
+### Control flow and performance
+
+- **Exhaustive** switches / explicit **default** where required; use **block bodies** for conditionals if the style guide requires.
+- **Limit nesting**; prefer early returns over deep `else` ladders.
+- Pull **expensive work** (especially I/O and DB round-trips) **out of inner loops**; **batch** where possible.
+- **Validate sizes** for bulk inputs before processing.
+
+### Comments
+
+- Document **public contracts** (exported types, modules, APIs); place comments **above** the code they describe; **update** when behavior changes.
+- **Remove** commented-out code or **explain** why it stays.
+- **TODO/FIXME**: include **owner and date** when the team expects follow-up.
+
+### Test quality
+
+- Too many **mocks** vs real behavior?
+- **Invalid** or **meaningless** tests written only for coverage?
+- **Duplicate** test code?
+- **Consistent** test data builders/factories?
+- **Minimal** test dependencies?
+- Excessive tests for **getters/setters** or **trivial** logic?
+- **Integration** tests mislabeled as **unit** tests?
+
+### Errors and logging
+
+- Do **not** use exceptions/errors for **ordinary control flow**.
+- Do **not swallow** errors; handle or translate at **boundaries**; **release resources** on all paths (`finally`, `defer`, `using`, …).
+- Respect language rules for **`finally`/`defer`** (e.g. avoid patterns that mask errors).
+- Prefer **empty collections** over **null** for collection returns; if null is meaningful, **document** it.
+- Log with correct **severity**; failure logs need **context + stack**; avoid **noise**; use **lazy/conditional** formatting when the API supports it.
+
+### SQL and relational access
+
+- Follow team guidance for **`COUNT(*)` vs `COUNT(column)`**; understand **nullable aggregates** (e.g. `SUM`).
+- **Short-circuit** paging when total count is zero.
+- **No** ad-hoc **string-concatenated** SQL; use **parameters/binders**.
+- Avoid **`SELECT *`** when explicit columns improve stability and index use.
+- **Cap** row counts for interactive paths; avoid **huge `IN`** lists.
+- Cap **JOIN** count per team policy (e.g. **≤ 3** tables) unless explicitly reviewed.
+- Keep **documented** representative SQL and **plans** (e.g. `EXPLAIN`) for critical API queries.
+
+### Layered architecture
+
+- **Outer layer**: syntactic/type validation (nullability, ranges, formats). **Domain/service**: business rules (existence, duplicates, invariants). Inner layers avoid **duplicating** trivial checks but **null-check** results from other components when the contract allows absence.
+- Do **not** skip prescribed layers (e.g. UI calling persistence directly when a service/domain layer is required).
+
+### Dependencies and artifacts
+
+- **Pin versions** consistently across modules; the same logical artifact must not resolve to **conflicting** versions.
+- Avoid perpetual **floating snapshots** in released builds unless policy explicitly allows.
+
+### Security (application)
+
+- **Authorize** every user-scoped action; **desensitize** sensitive fields in logs and UI.
+- **Validate and bind** all structured inputs; **escape** output in HTML contexts; **CSRF** / **anti-replay** for state-changing browser flows; **moderate** user-generated content.
+
+### Documentation layout
+
+- **README**, **QUICK_START** at repository root; **PRD** under `docs/prd/`, **API** under `docs/api/`, **UML** under `docs/uml/`, **schema** under `docs/schema/`, **reports** under `docs/report/`; other material under `docs/`.
+
+### Miscellaneous
+
+- **Precompile** heavy regular expressions.
+- Prefer **explicit capacity** when constructing large growable structures.
+- **Remove** dead code and obsolete configuration.
+
+---
+
+## 工具的使用方法
+
+- Moltbook（使用时简称为 mb）
+  • 使用手册: /Users/mini/agents/moltbook/skill.md
+  • 凭证路径：/Users/mini/.config/moltbook/credentials.json
+  • 请求地址: https://www.moltbook.com（带 www），例如：
+    • 查状态：GET https://www.moltbook.com/api/v1/agents/status
+    • 看 feed：GET https://www.moltbook.com/api/v1/feed?sort=hot&limit=25
+  • 请求头加：Authorization: Bearer <api_key>（key 从上面 json 里读）。
+  • 首选语言：english
+
+{{OPENSKILLS}}

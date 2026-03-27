@@ -1,0 +1,175 @@
+# Project Configuration
+# Shared rules + **Design guidelines** (language-agnostic): `cursorrules/common` — prepended via merge-rules.sh. Assistant behavior: 与用户沟通 in `common`.
+file_location: root_directory
+file_name: .cursorrules
+auther: Rongjin Zhang
+
+
+# AI Developer Profile
+ai_persona:
+  role: Senior Java Developer
+
+
+# Technical Stack
+tech_stack:
+  framework: SpringBoot
+  database: MybatisPlus
+  build_tool: Maven
+  java_version: 8
+  dependencies:
+    - Eclipse Collections
+    - Commons Lang3
+    - Guava
+    - VAVR
+    - Junit5
+    - JQwik
+    - JMH
+    - lombok
+    - MapStruct
+  language: English
+  code_comments: English
+
+
+# Java & stack-specific specification
+
+Language-agnostic **naming, formatting, collections, concurrency, control flow, comments, tests, errors, SQL, layering, dependencies, security, documentation layout**: **Design guidelines** in `cursorrules/common`. Below: **Java / MyBatis / Spring / this repo** only.
+
+## Naming (Java & layered model)
+
+- **Classes** nouns in `UpperCamelCase`, except domain suffixes **DO / BO / DTO / VO** as adopted by the project.
+- **Methods, parameters, fields, locals**: `lowerCamelCase`.
+- **Packages**: lowercase, **one English word per segment**, singular.
+- **Arrays**: brackets on the type (`String[]`), not after the name.
+- **Boolean fields**: no `is` prefix in Java names; map carefully if DB columns use `is_xxx`.
+- **Abstract** classes start with `Abstract` or `Base`; **exceptions** end with `Exception`; **tests** `{Target}Test`.
+- **Interfaces** for **Service / DAO**; implementations end with `Impl`. Capability-style interfaces use **adjective** names; **no** default modifiers on interface methods; **only constants** as interface fields.
+- **Enums** end with `Enum`; enum members **UPPER_CASE**.
+- **Service/DAO methods**: `get` / `list` / `count` / `insert` / `delete` / `update`.
+- Domain types: **`*DO`, `*DTO`, `*VO`**; do not use **`*POJO`**.
+- **QO** lives at the **controller** layer; controllers map QO → model via structure mapping, then pass the model into **service**.
+
+## Constants (Java literals)
+
+- Use uppercase **`L`** for `long` literals (e.g. `1L`).
+
+## Formatting (Java)
+
+- Prefer **`import`** over fully qualified class names unless names collide.
+
+## OOP (Java)
+
+- Access **static** members via the **class name**.
+- **@Override** on all overridden methods.
+- **varargs** only when parameters share type and meaning.
+- Do **not** change method signatures in place; use **@Deprecated** with explanation; do not call deprecated APIs.
+- **equals**: null-safe patterns; use **equals** (not `==`) for **wrapper** types.
+- **POJO** members: **no** field default values in the sense of this guide; **serialVersionUID** only when compatibility strategy requires change.
+- **No business logic in constructors**; use an explicit **init** path.
+- **POJO** implements **toString**.
+- **String.split**: check bounds before indexed access.
+- Group **constructors** and overloads; order methods **public → protected → private → getters/setters**.
+- **Setter** parameter names match fields; **StringBuilder** (or equivalent) for repeated string append in loops.
+- Use **`final`** where appropriate; **clone**: beware shallow copy; enforce **access levels** per team rules.
+
+## Collections (Java SE)
+
+- Do **not** mutate **keySet() / values() / entrySet()** views to add elements.
+- **subList** is a view; do **not** cast to **ArrayList**; avoid changing backing list size while a subList is live.
+- **List → array**: `toArray(T[])`.
+- Do **not** structurally modify the list from **Arrays.asList**.
+- Respect **`<? extends T>` / `<? super T>`** for APIs you expose or consume.
+
+## Concurrency (Java)
+
+- Prefer **ThreadPoolExecutor** over **Executors** factory shortcuts for pools.
+- **SimpleDateFormat** is not thread-safe; use **java.time** or other safe APIs.
+- **ThreadLocal.remove()** when work finishes.
+- **Double-checked locking**: use **volatile** (or better, **init-on-demand holder** / concurrent utilities) as appropriate.
+- Prefer **ThreadLocalRandom** over shared **Random**; **AtomicInteger**, **LongAdder**, etc. where they fit.
+- Mind **HashMap** concurrent resize pitfalls; prefer **ConcurrentHashMap** when concurrent mutation is real.
+
+## Flow control (Java + services)
+
+- **switch**: every case ends with **break/return**; **default** required.
+- **Braces** on all control statements.
+- Document **where** parameter validation may be skipped vs required (controller vs service vs model).
+
+## Comments (Javadoc)
+
+- **Javadoc** on classes, fields, and methods; **required** on abstract/interface methods.
+- Every class: **author** and **date** in Javadoc.
+- **Enumeration** constants: Javadoc each value.
+
+## Templates & misc (Java ecosystem)
+
+- **Velocity**: use POJO property names; **`$!{var}`** for null-safe output; keep templates thin.
+- **Random**: **nextInt** / **nextLong**, not **`Math.random() * N`** for integer ranges.
+- **Timestamps**: **`System.currentTimeMillis()`** where that is the project standard.
+
+# Exception and Logs (Java)
+
+## Exception
+
+- Do **not** catch **JDK unchecked** runtime exceptions to “handle”; use **preconditions** instead.
+- **RPC** boundary: use **return codes** as the project defines; **application** code uses **exceptions**.
+- Use **domain-specific** exception types, not generic throws.
+
+## Logs
+
+- Facade: **SLF4J** API, not **Log4j/Logback** types directly in app code.
+- Retain log files **≥ 15 days**.
+- File pattern: **`app_logType_logName.log`**.
+- **Logger additivity**: **false** where the project configures appenders.
+- Log **every branch entry** at the level the runbook requires (team standard).
+
+# MySQL Rules (this project)
+
+## Table Schema Rules
+
+- Boolean-like columns: **`is_xxx`** with **unsigned tinyint**; exception **`is_deleted`**.
+- Table/column names: lowercase letters, digits, underscores; **no plural table names**; no reserved keywords.
+- Index names: **`pk_` / `uk_` / `idx_`**.
+- Decimals: **`decimal`**, not float/double.
+- Fixed length → **char**; **varchar** length ≤ 5000.
+- **Relation** tables suffix **`_rel`**.
+- **`id`**: unsigned int/long, values start from **10_000_000**.
+- **`ct` / `ut` / `dt`**: unsigned int, **UNIX seconds**; **`is_deleted`** same numeric family as **`id`**, default **0**.
+- Prefer **defaults** on columns; comments in **English**.
+
+## Index Rules
+
+- (Unique vs non-unique, **varchar** prefix length, **LIKE** + pagination, **ORDER BY** vs index, covering indexes, late join for offsets, **EXPLAIN** goals, composite column order: **SQL and relational access** in `common`.)
+
+## SQL Rules (project policy)
+
+- **No** foreign keys with cascading updates; **no** stored procedures.
+- (Aggregate nullability, `COUNT(*)` vs `COUNT(col)`, paging short-circuit, `SELECT` before corrective DML, `IN` size, row caps, `EXPLAIN` discipline: **SQL and relational access** in `common`.)
+
+## ORM (MyBatis-Plus / XML)
+
+- Explicit column list; **no `SELECT *`**.
+- **Boolean** POJO fields: naming vs DB **`is_`** — explicit **mapping**.
+- **No `resultClass`**; **DO + resultMap**.
+- **No `${}`** interpolation for user-controlled fragments.
+- **No** ORM paging that loads the full table into memory.
+- **No HashMap/Hashtable** as row types; use **DO**s.
+- **`gmt_modified`** (or project equivalent) updates with the row.
+- Avoid “update everything” APIs and **excessive @Transactional**.
+- Know **MyBatis** `isEqual` / `isNotEmpty` / `isNotNull` semantics.
+
+# Project Specification (Java services)
+
+## Application Layers
+
+- (Where to validate what, skipping layers, null-checking downstream results: **Layered architecture** in `common`.)
+- Layer names and responsibilities: **Open API / View / Web / Service / Manager / DAO** per project architecture doc.
+- **Call chain**: **controller → service → model → entity**; **service** must not call **entity** directly.
+- **Structure mapping**: **MapStruct**; code under **`/struct_mapper`**; methods **`xxxToYyy`** (`qo` / `dto` / `model` / `entity` / `dao`).
+
+## Library (Maven)
+
+- **GAV** rules, version naming, **no SNAPSHOT** in releases (except security exceptions), unified BOM/properties for grouped deps, same **groupId:artifactId** → same version across modules, publish guidelines.
+
+## Server (JVM / ops)
+
+- Reduce **TIME_WAIT** for high-QPS; raise **file descriptor** limits; **-XX:+HeapDumpOnOutOfMemoryError**; internal **forward** vs external redirect tooling.

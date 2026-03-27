@@ -1,0 +1,13 @@
+# Java rules — source layout
+
+维护与编辑请使用 **`cursorrules/raw-rules/java-rules`**。
+
+与共同规则合并：
+
+```bash
+cursorrules/merge-rules.sh java-rules
+```
+
+输出：`cursorrules/output-rules/java-rules`。
+
+语言无关约定在 **`cursorrules/common`**：**与用户沟通**（助手协作）、**Design guidelines**（命名、格式、集合与并发、测试、错误与日志、SQL、分层、依赖、安全、文档目录等，英文）；合并时位于 raw Java 规则之前。
