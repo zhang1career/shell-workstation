@@ -908,6 +908,81 @@ python image_filter.py photo.jpg output.jpg -r 8
 
 ---
 
+### 211c. `image2thumbnail.py` - 图片缩略图生成
+
+**功能**：将任意常见格式图片缩放到指定宽高，支持三种缩放策略（裁剪填满、留白适配、拉伸），适合应用图标、列表缩略图等场景。
+
+**用法**：
+```bash
+python image2thumbnail.py <源图片> [-o 输出路径] [-W 宽度] [-H 高度] [-m 模式]
+```
+
+**参数**：
+- `源图片` - 必需，输入文件路径（如 png、jpg、webp）
+- `-o`, `--output` - 可选，输出路径；默认在源文件同目录生成「原名_thumb.扩展名」
+- `-W`, `--width` - 目标宽度（像素），默认 58
+- `-H`, `--height` - 目标高度；省略则与宽度相同（正方形）
+- `-m`, `--mode` - `cover`（默认）居中裁剪铺满；`contain` 完整放入、不足透明留白；`stretch` 非等比拉伸
+
+**说明**：
+- `contain` 模式使用透明画布；若输出为 JPG，透明区域会按保存规则转为不透明背景
+- JPEG/WebP 会设置合理默认压缩质量
+
+**依赖**：
+- Python 3.6+
+- Pillow：`pip install Pillow`
+
+**示例**：
+```bash
+# 默认 58×58、cover，生成 icon_thumb.png
+python image2thumbnail.py icon.png
+
+# 指定输出与尺寸
+python image2thumbnail.py photo.jpg -o thumb.jpg -W 120 -H 120
+
+# 完整显示、留白（适合保留整张图）
+python image2thumbnail.py banner.png -W 200 -H 100 -m contain -o banner_small.png
+
+python image2thumbnail.py --help
+```
+
+---
+
+### 211d. `image_resize.py` - 图片按指定尺寸缩放
+
+**功能**：将图片转为指定的宽度与高度，缩放策略与 `image2thumbnail.py` 相同（`cover` / `contain` / `stretch`），但**必须显式给出目标尺寸**；默认输出文件名为「原名_宽x高.扩展名」，适合壁纸、封面、统一分辨率等通用缩放场景。
+
+**用法**：
+```bash
+python image_resize.py <源图片> --size 宽x高 [选项]
+python image_resize.py <源图片> -W 宽度 [-H 高度] [选项]
+```
+
+**参数**：
+- `源图片` - 必需
+- `--size WxH` - 与 `-W`/`-H` 二选一，如 `1920x1080`（支持 `×` 或 `x`）
+- `-W`, `--width` / `-H`, `--height` - 未使用 `--size` 时至少指定 `-W`；省略 `-H` 时高度等于宽度（正方形）
+- `-o`, `--output` - 输出路径；默认在源文件同目录生成「原名_宽x高.扩展名」
+- `-m`, `--mode` - 同 `image2thumbnail.py`：`cover`（默认）、`contain`、`stretch`
+
+**说明**：
+- 实现上复用 `image2thumbnail.resize_to_thumbnail`，需与 `image2thumbnail.py` 放在同一目录
+- 不要同时使用 `--size` 与 `-W`/`-H`
+
+**依赖**：
+- Python 3.6+
+- Pillow：`pip install Pillow`
+
+**示例**：
+```bash
+python image_resize.py photo.jpg --size 1920x1080
+python image_resize.py banner.png -W 800 -H 450 -m contain
+python image_resize.py icon.png -W 256 -o icon_256.png
+python image_resize.py --help
+```
+
+---
+
 ## 数据处理脚本
 
 ### 300. `filter_row_with_blank_field.sh` - 过滤空白字段行
@@ -1682,7 +1757,7 @@ chmod +x *.py
 | 容器部署 | aws_jenkins_deployee_run_fe.sh |
 | Git工具 | clean_worktree_interactive.sh, list_git_modifying_branches, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh |
 | Laravel工具 | laravel_diagnose.php |
-| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, jpg2png.py, md2pdf.py, djvu2pdf.py, image_filter.py, ios_screenshot_resize.py, font_preview.py |
+| Python工具 | pip_pkg_size.sh, png_info.py, png_cutout.py, png2jpg.py, jpg2png.py, md2pdf.py, djvu2pdf.py, image_filter.py, image2thumbnail.py, image_resize.py, ios_screenshot_resize.py, font_preview.py |
 | 数据处理 | filter_row_with_blank_field.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh |
 | API管理 | refresh_api_gateway_token.sh |
 | 音视频 | play_audio.py, txt2voice.py, voice2txt.py, wav2mp3.py, mix_sound.py, change_sound_volume.py, pick_sound.py, filter_sound.py, trim_audio_silence.py |
@@ -1693,7 +1768,7 @@ chmod +x *.py
 | 语言 | 脚本数量 | 脚本列表 |
 |-----|---------|---------|
 | Bash | 16 | add_swap.sh, add_user_to_dev_group.sh, aws_jenkins_deployee_run_fe.sh, clean_worktree_interactive.sh, clean_docker.sh, list_git_modifying_branches, filter_row_with_blank_field.sh, gen_patch.sh, git_nearest_direct_child_commit.sh, git_user_stats.sh, map_host_port_and_index_by_uri.sh, parse_uri_ip_and_write_cache.sh, pip_pkg_size.sh, refresh_api_gateway_token.sh, space-manager.sh, startup.sh |
-| Python | 21 | change_sound_volume.py, debug_server.py, djvu2pdf.py, filter_sound.py, font_preview.py, image_filter.py, ios_screenshot_resize.py, jpg2png.py, md2pdf.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
+| Python | 23 | change_sound_volume.py, debug_server.py, djvu2pdf.py, filter_sound.py, font_preview.py, image2thumbnail.py, image_filter.py, image_resize.py, ios_screenshot_resize.py, jpg2png.py, md2pdf.py, mix_sound.py, pick_sound.py, play_audio.py, png2jpg.py, png_cutout.py, png_info.py, send_kafka_template.py, simple_server.py, trim_audio_silence.py, txt2voice.py, voice2txt.py, wav2mp3.py |
 | PHP | 1 | laravel_diagnose.php |
 
 ---
